@@ -1,0 +1,344 @@
+/* Dark theme base */
+body {
+  background-color: #0d1117;
+  color: #f0f6fc;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 1rem;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header styles */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1em;
+  flex-wrap: wrap;
+}
+
+.date-input {
+  display: flex;
+  align-items: center;
+  justify-content: right;
+}
+
+.date-input input[type="date"] {
+  background-color: #21262d;
+  border: 1px solid #30363d;
+  color: #f0f6fc;
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+/* Feed list styles */
+.feed-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 1em 0;
+}
+
+.feed-item {
+  margin-bottom: 1em;
+}
+
+/* Comment styles */
+.comment-container {
+  border: 1px solid #3d444d;
+  border-radius: 4px;
+  margin-bottom: 1em;
+  background-color: #24001d;
+}
+
+.comment-container.comment-own {
+  border: 1px solid #388bfd66;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.comment-container:hover {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 1px #4493f8;
+}
+
+.comment-header {
+  padding: 0.25em 0.5em;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #3d444d;
+  font-size: 0.8em;
+}
+
+.comment-own .comment-header {
+  border-bottom: 1px solid #388bfd66;
+}
+
+.comment-avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 0.5em;
+}
+
+.comment-timestamp {
+  margin-left: auto;
+}
+
+.comment-header-username {
+  font-weight: bold;
+}
+
+.comment {
+  padding: 0.8em;
+  position: relative;
+  font-size: 0.9em;
+  color: #c9d1d9;
+}
+
+.comment-footer {
+  display: flex;
+  font-size: 0.8em;
+  background-color: #37002c;
+  padding: 0.5em;
+  border-top: 1px solid #3d444d;
+}
+
+.comment-own .comment-footer {
+  background-color: #388bfd1a;
+  padding: 0.5em;
+  border-top: 1px solid #388bfd66;
+}
+
+.comment-link {
+  text-decoration: none !important;
+  color: inherit;
+  font-weight: inherit;
+}
+
+/* Event styles */
+.event-container {
+  border: 1px solid #3d444d;
+  border-radius: 4px;
+  margin-bottom: 1em;
+  background-color: #1a2332;
+}
+
+.event-container.event-own {
+  border: 1px solid #388bfd66;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.event-container:hover {
+  border-color: #1f6feb;
+  box-shadow: 0 0 0 1px #4493f8;
+}
+
+.event-header {
+  padding: 0.25em 0.5em;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #3d444d;
+  font-size: 0.8em;
+}
+
+.event-own .event-header {
+  border-bottom: 1px solid #388bfd66;
+}
+
+.event-avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 0.5em;
+}
+
+.event-timestamp {
+  margin-left: auto;
+}
+
+.event-header-username {
+  font-weight: bold;
+}
+
+.event-body {
+  padding: 0.8em;
+  font-size: 0.9em;
+  color: #c9d1d9;
+}
+
+.event-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8em;
+  background-color: #243447;
+  padding: 0.5em;
+  border-top: 1px solid #3d444d;
+}
+
+.event-own .event-footer {
+  background-color: #388bfd1a;
+  padding: 0.5em;
+  border-top: 1px solid #388bfd66;
+}
+
+.event-link {
+  text-decoration: none !important;
+  color: inherit;
+  font-weight: inherit;
+}
+
+.event-issue-details {
+  color: #8b949e;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  gap: 0.25em;
+}
+
+.comment-issue-details {
+  color: #8b949e;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  gap: 0.25em;
+}
+
+/* Issue link and repo styling */
+.issue-link {
+  color: #388bfd;
+}
+
+.repo-name {
+  color: #8b949e;
+  font-weight: normal;
+}
+
+/* Issue title styling */
+.issue-title-footer {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+  display: inline-block;
+  vertical-align: top;
+  color: #ffffff;
+}
+
+/* GitHub-style issue state badges */
+.issue-state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  margin-right: 6px;
+}
+
+.issue-state-badge.opened {
+  background-color: #1a7f37;
+  color: #ffffff;
+}
+
+.issue-state-badge.closed {
+  background-color: #8250df;
+  color: #ffffff;
+}
+
+.issue-state-badge.reopened {
+  background-color: #1a7f37;
+  color: #ffffff;
+}
+
+.issue-state-badge svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
+/* Loading indicator */
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+  width: 100%;
+}
+
+.lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  margin: 4%;
+  border: 4px solid #a3a3a3;
+  border-radius: 50%;
+  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #a3a3a3 transparent transparent transparent;
+}
+
+.lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+
+.lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+
+.lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+
+@keyframes lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty state */
+.no-items {
+  text-align: center;
+  padding: 2rem;
+  color: #8b949e;
+}
+
+/* Markdown content styling */
+.markdown-body {
+  color: #f0f6fc;
+}
+
+.markdown-body p {
+  margin-bottom: 1rem;
+}
+
+.markdown-body a {
+  color: #58a6ff;
+}
+
+.markdown-body code {
+  background-color: rgba(110, 118, 129, 0.4);
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  font-size: 85%;
+}

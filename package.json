@@ -1,0 +1,22 @@
+{
+  "name": "github-feed",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Real-time GitHub feed using webhooks - built with SolidJS and SolidStart",
+  "scripts": {
+    "dev": "vinxi dev",
+    "build": "vinxi build",
+    "start": "vinxi start",
+    "preview": "vinxi start"
+  },
+  "dependencies": {
+    "@solidjs/router": "^0.15.3",
+    "@solidjs/start": "^1.1.0",
+    "solid-js": "^1.9.5",
+    "sqlite3": "^5.1.7",
+    "vinxi": "^0.5.7"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
