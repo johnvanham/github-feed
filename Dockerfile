@@ -1,5 +1,5 @@
 # Multi-stage build for GitHub Feed app
-FROM registry.fedoraproject.org/fedora:39 AS build
+FROM registry.fedoraproject.org/fedora:latest AS build
 
 # Install Node.js and npm
 RUN dnf install -y nodejs npm && dnf clean all
@@ -23,7 +23,7 @@ RUN deno install --allow-scripts
 RUN deno run build
 
 # Production stage  
-FROM registry.fedoraproject.org/fedora:39 AS runtime
+FROM registry.fedoraproject.org/fedora:latest AS runtime
 
 # Install Node.js and curl for runtime and health checks
 RUN dnf install -y nodejs curl && dnf clean all
