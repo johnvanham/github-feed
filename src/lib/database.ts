@@ -1,5 +1,4 @@
-import Database from 'sqlite3';
-import { promisify } from 'util';
+import Database from "better-sqlite3";
 
 // Types matching our frontend
 interface FeedItem {
@@ -21,22 +20,20 @@ interface FeedItem {
 }
 
 class FeedDatabase {
-  private db: Database.Database;
+  private db: Database;
   private initialized = false;
 
   constructor() {
     // Create database in data directory
     const dbPath = process.env.NODE_ENV === 'production' ? '/data/feed.db' : './feed.db';
-    this.db = new Database.Database(dbPath);
+    this.db = new Database(dbPath);
   }
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
-
-    const run = promisify(this.db.run.bind(this.db));
     
     // Create tables
-    await run(`
+    this.db.exec(`
       CREATE TABLE IF NOT EXISTS feed_items (
         id INTEGER PRIMARY KEY,
         type TEXT NOT NULL,
@@ -57,7 +54,7 @@ class FeedDatabase {
     `);
 
     // Index for faster date queries
-    await run(`
+    this.db.exec(`
       CREATE INDEX IF NOT EXISTS idx_created_at_date ON feed_items(created_at_date)
     `);
 
@@ -68,17 +65,18 @@ class FeedDatabase {
   async addFeedItem(item: FeedItem): Promise<void> {
     await this.initialize();
     
-    const run = promisify(this.db.run.bind(this.db));
     const createdAtDate = new Date(item.created_at).toISOString().split('T')[0];
     
     try {
-      await run(`
+      const stmt = this.db.prepare(`
         INSERT OR REPLACE INTO feed_items (
           github_id, type, created_at, user_login, user_avatar_url, repo,
           html_url, issue_url, issue_number, own_comment, body, event,
           issue_title, created_at_date
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [
+      `);
+      
+      stmt.run([
         item.id,
         item.type,
         item.created_at,
@@ -105,52 +103,48 @@ class FeedDatabase {
   async getFeedItems(date?: string): Promise<FeedItem[]> {
     await this.initialize();
     
-    const all = promisify(this.db.all.bind(this.db));
-    let query = `
-      SELECT * FROM feed_items
-    `;
-    let params: any[] = [];
-
-    if (date) {
-      query += ` WHERE created_at_date = ?`;
-      params.push(date);
-    }
-
-    query += ` ORDER BY created_at DESC`;
-
     try {
-      const rows: any[] = await all(query, params);
-      
-      return rows.map(row => ({
-        id: row.github_id,
-        type: row.type,
-        created_at: row.created_at,
-        user: {
-          login: row.user_login,
-          avatar_url: row.user_avatar_url
-        },
-        repo: row.repo,
-        html_url: row.html_url,
-        issue_url: row.issue_url,
-        issue_number: row.issue_number,
-        own_comment: Boolean(row.own_comment),
-        body: row.body,
-        event: row.event,
-        issue_title: row.issue_title
-      }));
+      let query = `SELECT * FROM feed_items`;
+      let stmt;
+
+      if (date) {
+        query += ` WHERE created_at_date = ?`;
+        stmt = this.db.prepare(query + ` ORDER BY created_at DESC`);
+        return stmt.all(date).map(this.mapRowToFeedItem);
+      } else {
+        stmt = this.db.prepare(query + ` ORDER BY created_at DESC`);
+        return stmt.all().map(this.mapRowToFeedItem);
+      }
     } catch (error) {
       console.error('Error fetching feed items from database:', error);
       throw error;
     }
   }
 
+  private mapRowToFeedItem = (row: any): FeedItem => ({
+    id: row.github_id,
+    type: row.type,
+    created_at: row.created_at,
+    user: {
+      login: row.user_login,
+      avatar_url: row.user_avatar_url
+    },
+    repo: row.repo,
+    html_url: row.html_url,
+    issue_url: row.issue_url,
+    issue_number: row.issue_number,
+    own_comment: Boolean(row.own_comment),
+    body: row.body,
+    event: row.event,
+    issue_title: row.issue_title
+  });
+
   async getItemCount(): Promise<number> {
     await this.initialize();
     
-    const get = promisify(this.db.get.bind(this.db));
-    
     try {
-      const result: any = await get(`SELECT COUNT(*) as count FROM feed_items`);
+      const stmt = this.db.prepare(`SELECT COUNT(*) as count FROM feed_items`);
+      const result: any = stmt.get();
       return result.count;
     } catch (error) {
       console.error('Error getting item count:', error);

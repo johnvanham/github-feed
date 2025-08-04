@@ -7,7 +7,7 @@ A real-time GitHub activity feed built with SolidJS and SolidStart that receives
 - **Real-time updates** via GitHub webhooks (no API polling delays)
 - **Issue lifecycle tracking** - see when issues are opened, closed, reopened
 - **Comment notifications** - get notified of new comments immediately
-- **SQLite persistence** - all events stored locally in database
+- **SQLite persistence** - all events stored locally in database (better-sqlite3 v12.2.0 for ARM64 compatibility)
 - **Security** - HMAC-SHA256 webhook signature validation
 - **User highlighting** - your own comments/issues are visually distinct
 - **Date filtering** - view activity for specific days
@@ -26,7 +26,7 @@ GITHUB_OWN_USERNAME='your-github-username'
 
 ### Build Image
 ```bash
-# Build for Raspberry Pi (ARM64)
+# Build for Raspberry Pi (ARM64) - multi-stage Deno build optimized for ARM64
 podman build --platform linux/arm64 -t github-feed:latest .
 
 # Build for Intel/AMD (AMD64)
@@ -171,6 +171,7 @@ The app validates webhook signatures using HMAC-SHA256. Invalid requests are rej
 1. Ensure `/data` volume is mounted and writable
 2. Check container logs for SQLite errors
 3. Database file location: `/data/feed.db` (production) or `./feed.db` (development)
+4. **ARM64/Raspberry Pi**: Uses better-sqlite3 v12.2.0 for native module compatibility
 
 ### Performance
 - SQLite database automatically handles persistence
@@ -194,7 +195,7 @@ The app validates webhook signatures using HMAC-SHA256. Invalid requests are rej
 
 ```bash
 # Install dependencies
-deno install
+deno install --allow-scripts
 
 # Start development server
 deno run dev

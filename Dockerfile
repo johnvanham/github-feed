@@ -1,20 +1,24 @@
-# Multi-stage build for GitHub Feed app
-FROM registry.fedoraproject.org/fedora:latest AS build
+# Multi-stage build for GitHub Feed app  
+FROM node:22-slim AS build
 
-# Install Node.js and npm
-RUN dnf install -y nodejs npm && dnf clean all
+# Install build tools for native modules
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    node-gyp \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Deno
+RUN npm install -g deno@latest
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json deno.lock ./
-
-# Install Deno (SolidStart uses Deno)
-RUN npm install -g deno@latest
-
-# Copy source code
-COPY . .
+# Copy package files and source code
+COPY package.json ./
+COPY src/ ./src/
+COPY app.config.ts ./
 
 # Install dependencies
 RUN deno install --allow-scripts
@@ -23,10 +27,10 @@ RUN deno install --allow-scripts
 RUN deno run build
 
 # Production stage  
-FROM registry.fedoraproject.org/fedora:latest AS runtime
+FROM denoland/deno:2.4.3 AS runtime
 
-# Install Node.js and curl for runtime and health checks
-RUN dnf install -y nodejs curl && dnf clean all
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
 WORKDIR /app
@@ -52,4 +56,4 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 # Start the application
-CMD ["node", ".output/server/index.mjs"]
+CMD ["deno", "run", "--allow-all", ".output/server/index.mjs"]
