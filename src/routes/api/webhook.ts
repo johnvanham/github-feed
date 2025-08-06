@@ -118,6 +118,16 @@ export async function POST(event: APIEvent) {
 
     // Process different event types
     if (eventType === 'issues' && body.issue && body.repository) {
+      // Only process specific issue actions, exclude 'edited'
+      const allowedActions = ['opened', 'closed', 'reopened'];
+      if (!body.action || !allowedActions.includes(body.action)) {
+        console.log(`Ignoring issues event with action: ${body.action}`);
+        return new Response(JSON.stringify({ success: true, ignored: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
       const feedItem = {
         id: body.issue.id,
         type: 'event' as const,
@@ -140,6 +150,16 @@ export async function POST(event: APIEvent) {
     }
     
     if (eventType === 'issue_comment' && body.comment && body.issue && body.repository) {
+      // Only process comment creation, exclude 'edited' and 'deleted'
+      const allowedActions = ['created'];
+      if (!body.action || !allowedActions.includes(body.action)) {
+        console.log(`Ignoring issue_comment event with action: ${body.action}`);
+        return new Response(JSON.stringify({ success: true, ignored: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
       const feedItem = {
         id: body.comment.id,
         type: 'comment' as const,
