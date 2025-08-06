@@ -79,7 +79,7 @@ class FeedDatabase {
         String(item.html_url || ''),                            // Ensure string URL
         String(item.issue_url || ''),                           // Ensure string issue URL
         Number(item.issue_number) || 0,                         // Ensure numeric issue number
-        Boolean(item.own_comment),                              // Ensure boolean
+        item.own_comment ? 1 : 0,                               // Convert boolean to number
         item.body ? String(item.body) : null,                   // String or null for body
         item.event ? String(item.event) : null,                 // String or null for event
         item.issue_title ? String(item.issue_title) : null,     // String or null for title
