@@ -16,6 +16,7 @@ WORKDIR /app
 COPY package.json ./
 COPY src/ ./src/
 COPY app.config.ts ./
+COPY populate-github-data.cjs ./
 
 # Install dependencies
 RUN npm install
@@ -41,6 +42,9 @@ COPY --from=build /app/.output ./.output
 # Copy package.json and node_modules for runtime dependencies
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
+
+# Copy populate script for data population
+COPY --from=build /app/populate-github-data.cjs ./
 
 # Expose port
 EXPOSE 3000
