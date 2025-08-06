@@ -99,11 +99,14 @@ export default function Home() {
     loadFeedData();
   });
 
-  // Auto-refresh every 5 minutes
+  // Auto-refresh every 60 seconds when viewing current date
   onMount(() => {
     const interval = setInterval(() => {
-      loadFeedData();
-    }, 300000); // 5 minutes
+      const today = new Date().toISOString().split('T')[0];
+      if (selectedDate() === today) {
+        loadFeedData();
+      }
+    }, 60000); // 60 seconds
     
     // Cleanup interval on unmount
     return () => clearInterval(interval);
