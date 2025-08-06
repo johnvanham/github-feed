@@ -1,0 +1,22 @@
+import { APIEvent } from "@solidjs/start/server";
+import { readFileSync } from "fs";
+import { resolve } from "path";
+
+export async function GET(event: APIEvent) {
+  try {
+    // Read the favicon.svg file from the public directory
+    const faviconPath = resolve(process.cwd(), "public", "favicon.svg");
+    const faviconContent = readFileSync(faviconPath, "utf-8");
+    
+    return new Response(faviconContent, {
+      status: 200,
+      headers: {
+        "Content-Type": "image/svg+xml",
+        "Cache-Control": "public, max-age=604800", // 7 days
+      },
+    });
+  } catch (error) {
+    console.error("Error serving favicon.svg:", error);
+    return new Response("Not Found", { status: 404 });
+  }
+}
