@@ -1,5 +1,6 @@
-import { createSignal, createEffect, For, Show } from "solid-js";
+import { createSignal, createEffect, For, Show, createMemo, onMount } from "solid-js";
 import { createAsync } from "@solidjs/router";
+import { marked } from "marked";
 
 // Types matching our existing app
 interface FeedItem {
@@ -20,13 +21,65 @@ interface FeedItem {
   issue_title?: string;
 }
 
+interface IssuePill {
+  issue_number: number;
+  repo: string;
+  html_url: string;
+}
+
+// Process images in markdown content
+function processImages(str: string): string {
+  if (!str) return '';
+  
+  // Replace markdown image syntax ![alt](url) with [IMAGE] link
+  str = str.replace(/!\[([^\]]*)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="image-link">[IMAGE]</a>');
+  
+  // Replace HTML img tags with [IMAGE] link
+  str = str.replace(/<img[^>]*src=["']([^"']*)["'][^>]*>/gi, '<a href="$1" target="_blank" rel="noopener" class="image-link">[IMAGE]</a>');
+  
+  return str;
+}
+
+// Truncate a string to only include first N paragraphs
+function truncate(str: string, paras: number = 3): string {
+  if (!str) return '';
+  
+  // First process images
+  str = processImages(str);
+  
+  const paragraphs = str.split('\n');
+  return paragraphs.length > paras
+    ? paragraphs.slice(0, paras).join('<br>') + '<span class="more">...</span>'
+    : str;
+}
+
 export default function Home() {
   const [feedItems, setFeedItems] = createSignal<FeedItem[]>([]);
   const [selectedDate, setSelectedDate] = createSignal(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = createSignal(true);
+  const [initialLoad, setInitialLoad] = createSignal(true);
 
-  // Load feed items for the selected date
-  createEffect(async () => {
+  // Compute unique issues from feed items
+  const uniqueIssues = createMemo(() => {
+    const items = feedItems();
+    if (!items || items.length === 0) return [];
+    
+    const unique = items.reduce((acc, item) => {
+      if (!acc.find((issue) => issue.issue_number === item.issue_number && issue.repo === item.repo)) {
+        acc.push({
+          issue_number: item.issue_number,
+          repo: item.repo,
+          html_url: item.html_url.split('#')[0] // Remove fragment
+        });
+      }
+      return acc;
+    }, [] as IssuePill[]);
+    
+    return unique.sort((a, b) => a.issue_number - b.issue_number);
+  });
+
+  // Load feed items function
+  const loadFeedData = async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/feed?date=${selectedDate()}`);
@@ -37,23 +90,55 @@ export default function Home() {
       setFeedItems([]);
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
+  };
+
+  // Load feed items for the selected date
+  createEffect(() => {
+    loadFeedData();
+  });
+
+  // Auto-refresh every 5 minutes
+  onMount(() => {
+    const interval = setInterval(() => {
+      loadFeedData();
+    }, 300000); // 5 minutes
+    
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
   });
 
   return (
     <div class="github-feed">
       <div class="header">
-        <h1>GitHub Feed</h1>
+        <h1>GitHub Feed {loading() && !initialLoad() ? '🔄' : ''}</h1>
         <div class="date-input">
           <input
             type="date"
             value={selectedDate()}
-            onInput={(e) => setSelectedDate(e.target.value)}
+            required
+            onInput={(e) => {
+              const newValue = e.target.value;
+              // Only update if we have a valid date, otherwise keep current date
+              if (newValue && newValue.trim() !== '') {
+                setSelectedDate(newValue);
+              } else {
+                // Reset to current value if cleared
+                e.target.value = selectedDate();
+              }
+            }}
+            onBlur={(e) => {
+              // Ensure we always have a valid date on blur
+              if (!e.target.value || e.target.value.trim() === '') {
+                e.target.value = selectedDate();
+              }
+            }}
           />
         </div>
       </div>
 
-      <Show when={loading()} fallback={
+      <Show when={loading() && initialLoad()} fallback={
         <Show when={feedItems().length === 0} fallback={
           <ul class="feed-list">
             <For each={feedItems()}>
@@ -71,7 +156,7 @@ export default function Home() {
                           timeZoneName: 'short'
                         })}
                       </strong>
-                      ({new Date(item.created_at).toLocaleTimeString('en-GB', {
+                      {' '}({new Date(item.created_at).toLocaleTimeString('en-GB', {
                         timeZone: 'Asia/Kolkata'
                       })} IST)
                     </div>
@@ -79,14 +164,14 @@ export default function Home() {
 
                   <Show when={item.type === 'comment'}>
                     <Show when={item.body}>
-                      <div class="markdown-body comment" innerHTML={item.body} />
+                      <div class="markdown-body comment" innerHTML={marked(truncate(item.body, 3))} />
                     </Show>
                   </Show>
 
                   <Show when={item.type === 'event'}>
                     <Show when={item.body}>
                       <div class="event-body">
-                        <div class="markdown-body event-description" innerHTML={item.body} />
+                        <div class="markdown-body event-description" innerHTML={marked(truncate(item.body, 3))} />
                       </div>
                     </Show>
                   </Show>
@@ -135,6 +220,19 @@ export default function Home() {
               </li>
                 )}
               </For>
+              
+              {/* Issue pills at the bottom */}
+              <Show when={uniqueIssues().length > 0}>
+                <li class="unique-issues-container">
+                  <For each={uniqueIssues()}>
+                    {(issue) => (
+                      <a href={issue.html_url} target="_blank" rel="noopener" class="issue-link pill">
+                        {issue.repo}#{issue.issue_number}
+                      </a>
+                    )}
+                  </For>
+                </li>
+              </Show>
             </ul>
           }>
             <div class="no-items">

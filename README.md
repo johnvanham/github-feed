@@ -1,54 +1,110 @@
-# GitHub Feed - Real-time Webhook App
+# GitHub Feed
 
-A real-time GitHub activity feed built with SolidJS and SolidStart that receives webhook events from GitHub repositories to display issues and comments as they happen.
+Real-time GitHub activity feed built with SolidJS and SolidStart. Monitor issue comments and events across multiple repositories with webhook integration and historical data population.
 
 ## Features
 
-- **Real-time updates** via GitHub webhooks (no API polling delays)
-- **Issue lifecycle tracking** - see when issues are opened, closed, reopened
-- **Comment notifications** - get notified of new comments immediately
-- **SQLite persistence** - all events stored locally in database (better-sqlite3 v12.2.0 for ARM64 compatibility)
-- **Security** - HMAC-SHA256 webhook signature validation
-- **User highlighting** - your own comments/issues are visually distinct
-- **Date filtering** - view activity for specific days
-- **Responsive design** - works on desktop and mobile
+- 📡 **Real-time webhooks** - Receive GitHub events as they happen
+- 💬 **Issue comments** - Track all comments across your repositories
+- 📝 **Issue events** - Monitor when issues are opened, closed, or reopened
+- 🔍 **Multi-repository** - Monitor multiple repositories from a single feed
+- 🐳 **Docker ready** - Optimized for container deployment on Raspberry Pi
+- 📊 **Historical data** - Populate database with last 30 days of activity
+- 🔐 **Private repos** - Works with private repositories using GitHub tokens
+- ⚡ **Node.js runtime** - Fast and reliable server-side execution
+- 🗄️ **SQLite database** - better-sqlite3 v12.2.0 optimized for ARM64
 
-## Environment Variables
+## Quick Start
 
-Create a `.env` file in the project root with:
+### Prerequisites
+
+- Node.js v22+
+- GitHub personal access token (for private repos and data population)
+
+### Development
 
 ```bash
-GITHUB_WEBHOOK_SECRET='your-webhook-secret-here'
-GITHUB_OWN_USERNAME='your-github-username'
+# Clone and install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your GitHub configuration
+
+# Start development server
+npm run dev
+```
+
+### Production Deployment
+
+```bash
+# Build the application
+npm run build
+
+# Run production server
+node .output/server/index.mjs
+```
+
+### Data Population
+
+Populate your database with historical GitHub activity:
+
+```bash
+# Fetch last 30 days of issues and comments
+node populate-github-data.cjs
+```
+
+## Configuration
+
+Create a `.env` file with your GitHub configuration:
+
+```env
+GITHUB_TOKEN=your_github_personal_access_token
+GITHUB_WEBHOOK_SECRET=your_webhook_secret
+GITHUB_OWN_USERNAME=your_github_username
+GITHUB_REPOSITORIES=owner/repo1,owner/repo2,owner/repo3
+GITHUB_ORG_NAME=your_organization
+NODE_ENV=production
 ```
 
 ## Docker Deployment
 
-### Build Image
+### Build Container
+
 ```bash
-# Build for Raspberry Pi (ARM64) - multi-stage Deno build optimized for ARM64
+# Build container with Node.js runtime
+podman build -t github-feed:latest .
+
+# Build for Raspberry Pi (ARM64)
 podman build --platform linux/arm64 -t github-feed:latest .
-
-# Build for Intel/AMD (AMD64)
-podman build --platform linux/amd64 -t github-feed:latest .
-
-# Multi-platform build
-podman build --platform linux/amd64,linux/arm64 -t github-feed:latest .
 ```
 
 ### Run Container
+
 ```bash
 podman run -d \
   --name github-feed \
   -p 3000:3000 \
   -v /data/github-feed:/data \
-  -e GITHUB_WEBHOOK_SECRET='your-webhook-secret-here' \
-  -e GITHUB_OWN_USERNAME='your-username' \
-  -e NODE_ENV=production \
+  --env-file .env \
   github-feed:latest
 ```
 
 The app will be available at `http://localhost:3000`
+
+## Architecture
+
+- **Frontend**: SolidJS with reactive UI
+- **Backend**: SolidStart with API routes  
+- **Database**: SQLite with better-sqlite3 (ARM64 optimized)
+- **Runtime**: Node.js v22+
+- **Container**: Multi-stage Docker build optimized for Raspberry Pi
+
+## API Endpoints
+
+- `GET /api/feed` - Get all feed items
+- `GET /api/feed?date=YYYY-MM-DD` - Get feed items for specific date
+- `POST /api/webhook` - GitHub webhook endpoint (with HMAC validation)
 
 ## Setting Up GitHub Webhooks
 
@@ -191,18 +247,23 @@ The app validates webhook signatures using HMAC-SHA256. Invalid requests are rej
 - ✅ No exposed secrets in logs
 - ✅ SQLite injection protection via parameterized queries
 
-## Development
+## Development Notes
+
+See [CLAUDE.md](./CLAUDE.md) for detailed development notes, configuration details, and recent changes.
+
+### Local Development
 
 ```bash
 # Install dependencies
-deno install --allow-scripts
+npm install
+
+# Set up environment
+cp .env.example .env
 
 # Start development server
-deno run dev
-
-# Environment variables for development
-export GITHUB_WEBHOOK_SECRET='your-secret'
-export GITHUB_OWN_USERNAME='your-username'
+npm run dev
 ```
 
-Access at `http://localhost:3000`
+### Technical Details
+
+Built with modern web technologies for optimal performance and reliability on various platforms including Raspberry Pi deployments.

@@ -9,9 +9,6 @@ RUN apt-get update && apt-get install -y \
     node-gyp \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Deno
-RUN npm install -g deno@latest
-
 # Set working directory
 WORKDIR /app
 
@@ -21,13 +18,13 @@ COPY src/ ./src/
 COPY app.config.ts ./
 
 # Install dependencies
-RUN deno install --allow-scripts
+RUN npm install
 
 # Build the application
-RUN deno run build
+RUN npm run build
 
 # Production stage  
-FROM denoland/deno:2.4.3 AS runtime
+FROM node:22-slim AS runtime
 
 # Install curl for health checks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
@@ -41,8 +38,9 @@ RUN mkdir -p /data && chmod 777 /data
 # Copy built application from build stage
 COPY --from=build /app/.output ./.output
 
-# Copy package.json for reference
+# Copy package.json and node_modules for runtime dependencies
 COPY --from=build /app/package.json ./
+COPY --from=build /app/node_modules ./node_modules
 
 # Expose port
 EXPOSE 3000
@@ -56,4 +54,4 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 # Start the application
-CMD ["deno", "run", "--allow-all", ".output/server/index.mjs"]
+CMD ["node", ".output/server/index.mjs"]

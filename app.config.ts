@@ -2,7 +2,7 @@ import { defineConfig } from "@solidjs/start/config";
 
 export default defineConfig({
   server: {
-    preset: "deno-deploy"
+    preset: "node-server"
   },
   vite: {
     server: {

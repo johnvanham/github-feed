@@ -1,15 +1,81 @@
-/* Dark theme base */
+/* Dark theme base matching github-comments */
 body {
-  background-color: #0d1117;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  font-size: 15px;
+  line-height: 1.5;
+  word-wrap: break-word;
   color: #f0f6fc;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-  margin: 0;
-  padding: 1rem;
+  background-color: #0d1117;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1em;
 }
 
-main {
-  max-width: 1200px;
-  margin: 0 auto;
+/* Link styling matching github-comments */
+a {
+  color: #60aaff;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Typography matching github-comments */
+h1 {
+  opacity: 0.8;
+  font-size: 1.2em;
+  font-weight: 600;
+  margin: 0.2em 0;
+}
+
+h2 {
+  opacity: 0.8;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+h3 {
+  opacity: 0.8;
+  font-size: 1.05em;
+  font-weight: 600;
+}
+
+/* Paragraph styling matching github-comments */
+p {
+  margin: 0;
+  margin-bottom: 0.5em;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+/* Code styling matching github-comments */
+pre {
+  background-color: #f6f8fa;
+  border-radius: 3px;
+  font-size: 85%;
+  line-height: 1.45;
+  overflow: auto;
+  padding: 16px;
+}
+
+code {
+  background-color: inherit;
+  border-radius: 3px;
+  font-size: 85%;
+  margin: 0;
+  padding: 0.2em 0.4em;
+}
+
+/* Blockquote styling matching github-comments */
+blockquote {
+  border-left: 2px solid #eee;
+  color: #888;
+  margin: 1em 0;
+  padding-left: 1em;
 }
 
 /* Header styles */
@@ -25,17 +91,60 @@ main {
   display: flex;
   align-items: center;
   justify-content: right;
+  position: relative;
+  cursor: pointer;
 }
 
 .date-input input[type="date"] {
   background-color: #21262d;
   border: 1px solid #30363d;
   color: #f0f6fc;
-  padding: 0.5rem;
+  padding: 0.3rem;
   border-radius: 6px;
+  cursor: pointer;
+  min-width: 120px;
+  font-size: 0.9em;
+  width: fit-content;
 }
 
-/* Feed list styles */
+.date-input input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Tighten date input internal spacing */
+.date-input input[type="date"]::-webkit-datetime-edit {
+  padding: 0;
+}
+
+.date-input input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+.date-input input[type="date"]::-webkit-datetime-edit-text {
+  padding: 0 2px;
+}
+
+.date-input input[type="date"]::-webkit-datetime-edit-month-field,
+.date-input input[type="date"]::-webkit-datetime-edit-day-field,
+.date-input input[type="date"]::-webkit-datetime-edit-year-field {
+  padding: 0 1px;
+}
+
+/* Feed list styles matching github-comments */
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 1em 0;
+}
+
 .feed-list {
   list-style-type: none;
   padding: 0;
@@ -95,8 +204,6 @@ main {
 .comment {
   padding: 0.8em;
   position: relative;
-  font-size: 0.9em;
-  color: #c9d1d9;
 }
 
 .comment-footer {
@@ -167,8 +274,6 @@ main {
 
 .event-body {
   padding: 0.8em;
-  font-size: 0.9em;
-  color: #c9d1d9;
 }
 
 .event-footer {
@@ -323,22 +428,95 @@ main {
   color: #8b949e;
 }
 
-/* Markdown content styling */
+/* Remove markdown-body specific styling - inherit from base styles */
 .markdown-body {
-  color: #f0f6fc;
+  /* Inherits from body and other base styles */
 }
 
-.markdown-body p {
-  margin-bottom: 1rem;
+/* Issue pills at bottom matching github-comments */
+.unique-issues-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1em 0;
+  flex-wrap: wrap;
 }
 
-.markdown-body a {
-  color: #58a6ff;
+.pill {
+  background-color: #00183a;
+  color: rgb(192, 192, 192);
+  padding: 0.1em 1em;
+  border-radius: 8px;
 }
 
-.markdown-body code {
-  background-color: rgba(110, 118, 129, 0.4);
-  padding: 0.2em 0.4em;
-  border-radius: 6px;
-  font-size: 85%;
+.unique-issues-container .pill {
+  padding: 0.3em 0.5em;
+  margin: 0.5em;
+}
+
+.unique-issues-container a {
+  color: #65a2f3;
+  font-weight: normal;
+}
+
+.unique-issues-container a:hover {
+  background-color: #006eff;
+  color: #fff;
+  text-decoration: none;
+}
+
+.issue-link.pill {
+  background-color: #00183a;
+  color: rgb(192, 192, 192);
+  padding: 0.3em 0.5em;
+  border-radius: 8px;
+  text-decoration: none;
+  display: inline-block;
+  margin: 0.5em;
+}
+
+.issue-link.pill:hover {
+  background-color: #006eff;
+  color: #fff;
+  text-decoration: none;
+}
+
+/* Truncation indicator matching github-comments */
+.more {
+  background-color: #00183a;
+  color: rgb(192, 192, 192);
+  padding: 0.1em 1em;
+  border-radius: 8px;
+  position: absolute;
+  right: 1em;
+  bottom: 0.5em;
+}
+/* Image link styling */
+.image-link {
+  background-color: #21262d;
+  border: 1px solid #30363d;
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: normal;
+  color: #58a6ff \!important;
+  text-decoration: none;
+  display: inline-block;
+  margin: 0.2em;
+}
+
+.image-link:hover {
+  background-color: #30363d;
+  border-color: #58a6ff;
+  text-decoration: none;
+}
+
+/* Hide the clear button */
+.date-input input[type="date"]::-webkit-clear-button {
+  display: none;
+}
+
+/* Hide clear button in other browsers */
+.date-input input[type="date"]::-ms-clear {
+  display: none;
 }
