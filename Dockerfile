@@ -15,6 +15,7 @@ WORKDIR /app
 # Copy package files and source code
 COPY package.json ./
 COPY src/ ./src/
+COPY public/ ./public/
 COPY app.config.ts ./
 COPY populate-github-data.cjs ./
 
@@ -42,6 +43,9 @@ COPY --from=build /app/.output ./.output
 # Copy package.json and node_modules for runtime dependencies
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
+
+# Copy public directory with favicon and other static assets
+COPY --from=build /app/public ./public
 
 # Copy populate script for data population
 COPY --from=build /app/populate-github-data.cjs ./
