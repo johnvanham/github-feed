@@ -1,14 +1,14 @@
 import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
 import { Suspense } from "solid-js";
-import { Meta, Title } from "@solidjs/meta";
+import { MetaProvider, Meta, Title } from "@solidjs/meta";
 import "./app.css";
 
 export default function App() {
   return (
     <Router
       root={props => (
-        <>
+        <MetaProvider>
           <Title>GitHub Feed</Title>
           <Meta name="description" content="Real-time GitHub activity feed using webhooks" />
           <Meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -23,7 +23,7 @@ export default function App() {
           <main>
             <Suspense>{props.children}</Suspense>
           </main>
-        </>
+        </MetaProvider>
       )}
     >
       <FileRoutes />
