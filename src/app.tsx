@@ -14,11 +14,9 @@ export default function App() {
           <Meta name="viewport" content="width=device-width, initial-scale=1" />
           
           {/* Favicon */}
-          <Meta name="icon" href="/favicon.svg" />
-          <Meta name="shortcut icon" href="/favicon.svg" />
-          <Meta name="apple-touch-icon" href="/favicon.svg" />
           <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
           <link rel="alternate icon" href="/favicon.ico" />
+          <link rel="apple-touch-icon" href="/favicon.svg" />
           
           <main>
             <Suspense>{props.children}</Suspense>
