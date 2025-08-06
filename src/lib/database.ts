@@ -68,6 +68,24 @@ class FeedDatabase {
     const createdAtDate = new Date(item.created_at).toISOString().split('T')[0];
     
     try {
+      // Validate and sanitize all values to ensure SQLite compatibility
+      const sanitizedValues = [
+        Number(item.id) || 0,                                    // Ensure numeric ID
+        String(item.type || ''),                                 // Ensure string type
+        String(item.created_at || ''),                          // Ensure string timestamp
+        String(item.user?.login || ''),                         // Safely extract user login
+        String(item.user?.avatar_url || ''),                    // Safely extract avatar URL
+        String(item.repo || ''),                                // Ensure string repo
+        String(item.html_url || ''),                            // Ensure string URL
+        String(item.issue_url || ''),                           // Ensure string issue URL
+        Number(item.issue_number) || 0,                         // Ensure numeric issue number
+        Boolean(item.own_comment),                              // Ensure boolean
+        item.body ? String(item.body) : null,                   // String or null for body
+        item.event ? String(item.event) : null,                 // String or null for event
+        item.issue_title ? String(item.issue_title) : null,     // String or null for title
+        String(createdAtDate)                                   // Ensure string date
+      ];
+      
       const stmt = this.db.prepare(`
         INSERT OR REPLACE INTO feed_items (
           github_id, type, created_at, user_login, user_avatar_url, repo,
@@ -76,26 +94,12 @@ class FeedDatabase {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       
-      stmt.run([
-        item.id,
-        item.type,
-        item.created_at,
-        item.user.login,
-        item.user.avatar_url,
-        item.repo,
-        item.html_url,
-        item.issue_url,
-        item.issue_number,
-        item.own_comment || false,
-        item.body || null,
-        item.event || null,
-        item.issue_title || null,
-        createdAtDate
-      ]);
+      stmt.run(sanitizedValues);
       
       console.log(`Added ${item.type} to database: ${item.type === 'event' ? item.event : 'comment'} on #${item.issue_number}`);
     } catch (error) {
       console.error('Error adding feed item to database:', error);
+      console.error('Failed item data:', JSON.stringify(item, null, 2));
       throw error;
     }
   }
