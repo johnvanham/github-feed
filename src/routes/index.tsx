@@ -1,6 +1,7 @@
 import { createSignal, createEffect, For, Show, createMemo, onMount } from "solid-js";
-import { createAsync } from "@solidjs/router";
+import { createAsync, useNavigate } from "@solidjs/router";
 import { marked } from "marked";
+import { isAuthenticated, logout, getAuthToken } from "../lib/auth";
 
 // Types matching our existing app
 interface FeedItem {
@@ -54,11 +55,23 @@ function truncate(str: string, paras: number = 3): string {
 }
 
 export default function Home() {
+  const navigate = useNavigate();
   const [feedItems, setFeedItems] = createSignal<FeedItem[]>([]);
   const [selectedDate, setSelectedDate] = createSignal(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = createSignal(true);
   const [initialLoad, setInitialLoad] = createSignal(true);
   const [seenItemIds, setSeenItemIds] = createSignal<Set<number>>(new Set());
+
+  // Check authentication on component mount
+  onMount(() => {
+    if (!isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
+    
+    // Request notification permission if authenticated
+    requestNotificationPermission();
+  });
 
   // Compute unique issues from feed items
   const uniqueIssues = createMemo(() => {
@@ -161,7 +174,21 @@ export default function Home() {
   const loadFeedData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/feed?date=${selectedDate()}`);
+      const token = getAuthToken();
+      const headers: Record<string, string> = {};
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(`/api/feed?date=${selectedDate()}`, { headers });
+      
+      if (response.status === 401) {
+        // Token expired or invalid, redirect to login
+        logout();
+        return;
+      }
+      
       const data = await response.json();
       
       // Check for new items and show notifications
@@ -182,11 +209,8 @@ export default function Home() {
     loadFeedData();
   });
 
-  // Auto-refresh every 60 seconds when viewing current date and request notifications
-  onMount(() => {
-    // Request notification permission
-    requestNotificationPermission();
-    
+  // Auto-refresh every 60 seconds when viewing current date
+  onMount(() => {    
     const interval = setInterval(() => {
       const today = new Date().toISOString().split('T')[0];
       if (selectedDate() === today) {
@@ -202,8 +226,9 @@ export default function Home() {
     <div class="github-feed">
       <div class="header">
         <h1>GitHub Feed</h1>
-        <div class="date-input">
-          <input
+        <div class="header-controls">
+          <div class="date-input">
+            <input
             type="date"
             value={selectedDate()}
             required
@@ -224,6 +249,10 @@ export default function Home() {
               }
             }}
           />
+          </div>
+          <button class="logout-button" onClick={logout}>
+            Logout
+          </button>
         </div>
       </div>
 

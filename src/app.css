@@ -87,6 +87,28 @@ blockquote {
   flex-wrap: wrap;
 }
 
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+}
+
+.logout-button {
+  background-color: #21262d;
+  border: 1px solid #30363d;
+  color: #f0f6fc;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  background-color: #30363d;
+  border-color: #8b949e;
+}
+
 .date-input {
   display: flex;
   align-items: center;

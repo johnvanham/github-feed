@@ -1,11 +1,21 @@
 import { APIEvent } from "@solidjs/start/server";
 import { getDatabase, type FeedItem } from "../../lib/database";
+import { checkServerAuth } from "../../lib/auth";
 
 // Database instance
 const db = getDatabase();
 
 export async function GET(event: APIEvent) {
   try {
+    // Check authentication
+    const auth = checkServerAuth(event.request);
+    if (!auth) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const url = new URL(event.request.url);
     const dateParam = url.searchParams.get('date');
     
@@ -13,7 +23,7 @@ export async function GET(event: APIEvent) {
     const sortedEvents = await db.getFeedItems(dateParam || undefined);
     console.log(`Feed API: Total events available: ${sortedEvents.length}`);
 
-    console.log(`[${new Date().toISOString()}] Feed API: returning ${sortedEvents.length} items${dateParam ? ` for date ${dateParam}` : ''}`);
+    console.log(`[${new Date().toISOString()}] Feed API: returning ${sortedEvents.length} items${dateParam ? ` for date ${dateParam}` : ''} for user ${auth.username}`);
 
     return new Response(JSON.stringify(sortedEvents), {
       status: 200,

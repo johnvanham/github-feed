@@ -59,6 +59,9 @@ node populate-github-data.cjs
 - `GITHUB_REPOSITORIES` - Comma-separated list of repositories to monitor
 - `GITHUB_ORG_NAME` - Organization name
 - `NODE_ENV` - Environment (production/development)
+- `AUTH_USERNAME` - Single username for application authentication (v1.6.0+)
+- `AUTH_PASSWORD` - Single password for application authentication (v1.6.0+)
+- `AUTH_SECRET` - Secret key for JWT-like token signing (v1.6.0+)
 
 ## Data Population
 The project includes a script to populate the database with historical GitHub data:
