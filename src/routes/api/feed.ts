@@ -1,6 +1,6 @@
 import { APIEvent } from "@solidjs/start/server";
 import { getDatabase, type FeedItem } from "../../lib/database";
-import { checkServerAuth } from "../../lib/auth";
+import { checkServerAuth } from "../../lib/auth.server";
 
 // Database instance
 const db = getDatabase();
