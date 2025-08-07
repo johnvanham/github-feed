@@ -3,6 +3,16 @@ import { createAsync, useNavigate } from "@solidjs/router";
 import { marked } from "marked";
 import { isAuthenticated, logout, getAuthToken } from "../lib/auth";
 
+// Get app version from package.json
+const getAppVersion = () => {
+  try {
+    // This will be replaced at build time
+    return "1.7.1";
+  } catch {
+    return "dev";
+  }
+};
+
 // Format repo name by removing configured org prefix
 function formatRepoName(fullRepoName: string, orgName?: string): string {
   if (orgName && fullRepoName.startsWith(`${orgName}/`)) {
@@ -442,6 +452,10 @@ export default function Home() {
           <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
         </div>
       </Show>
+
+      <footer class="version-footer">
+        <span class="version-text">GitHub Feed v{getAppVersion()}</span>
+      </footer>
     </div>
   );
 }

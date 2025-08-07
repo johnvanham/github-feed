@@ -670,3 +670,18 @@ ul {
 .new-item .event-avatar {
   animation: pulseGlow 1.5s ease-in-out;
 }
+
+/* Version footer */
+.version-footer {
+  text-align: center;
+  padding: 1rem 0;
+  margin-top: 2rem;
+  border-top: 1px solid #21262d;
+  
+  .version-text {
+    font-size: 0.75rem;
+    color: #7d8590;
+    opacity: 0.7;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+}
