@@ -11,6 +11,7 @@ Real-time GitHub activity feed built with SolidJS and SolidStart. Monitor issue 
 - 🐳 **Docker ready** - Optimized for container deployment on Raspberry Pi
 - 📊 **Historical data** - Populate database with last 30 days of activity
 - 🔐 **Private repos** - Works with private repositories using GitHub tokens
+- 🔒 **Authentication** - Built-in JWT-like authentication with configurable credentials
 - ⚡ **Node.js runtime** - Fast and reliable server-side execution
 - 🗄️ **SQLite database** - better-sqlite3 v12.2.0 optimized for ARM64
 
@@ -64,6 +65,9 @@ GITHUB_WEBHOOK_SECRET=your_webhook_secret
 GITHUB_OWN_USERNAME=your_github_username
 GITHUB_REPOSITORIES=owner/repo1,owner/repo2,owner/repo3
 GITHUB_ORG_NAME=your_organization
+AUTH_USERNAME=admin
+AUTH_PASSWORD=your_secure_password
+AUTH_SECRET=your_generated_secret_key
 NODE_ENV=production
 ```
 
@@ -105,6 +109,63 @@ The app will be available at `http://localhost:3000`
 - `GET /api/feed` - Get all feed items
 - `GET /api/feed?date=YYYY-MM-DD` - Get feed items for specific date
 - `POST /api/webhook` - GitHub webhook endpoint (with HMAC validation)
+
+## Authentication Setup
+
+The application includes built-in authentication to replace unreliable browser basic auth, especially useful for mobile access.
+
+### Generate Authentication Secret
+
+Create a secure random secret for token signing:
+
+**Using Node.js crypto:**
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+**Using OpenSSL:**
+```bash
+openssl rand -hex 32
+```
+
+**Using Python:**
+```bash
+python3 -c "import secrets; print(secrets.token_hex(32))"
+```
+
+### Environment Variables
+
+Add these authentication variables to your `.env` file:
+
+```env
+AUTH_USERNAME=admin
+AUTH_PASSWORD=your_secure_password  
+AUTH_SECRET=your_generated_secret_key
+```
+
+### Docker Deployment with Authentication
+
+```bash
+podman run -d \
+  --name github-feed \
+  -p 3000:3000 \
+  -v /data/github-feed:/data \
+  -e AUTH_USERNAME=admin \
+  -e AUTH_PASSWORD=your_secure_password \
+  -e AUTH_SECRET=your_generated_secret_key \
+  --env-file .env \
+  github-feed:latest
+```
+
+### How Authentication Works
+
+- **JWT-like tokens**: Uses HMAC-SHA256 signed tokens with 7-day expiration
+- **Session management**: Tokens stored in browser localStorage
+- **API protection**: All feed endpoints require valid authentication
+- **Webhook access**: GitHub webhook endpoint remains public for external access
+- **Mobile friendly**: Persistent login without constant re-authentication prompts
+
+Access the app at `http://localhost:3000` - you'll be redirected to `/login` if not authenticated.
 
 ## Setting Up GitHub Webhooks
 
