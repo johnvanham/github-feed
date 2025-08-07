@@ -11,6 +11,23 @@ function formatRepoName(fullRepoName: string, orgName?: string): string {
   return fullRepoName;
 }
 
+// Avatar caching component
+function CachedAvatar(props: { src: string; alt: string; class: string; user: string; onLoad?: () => void }) {
+  return (
+    <img 
+      class={props.class} 
+      src={props.src} 
+      alt={props.alt}
+      loading="lazy"
+      onLoad={props.onLoad}
+      style={{
+        "background-color": "#f6f8fa",
+        "border-radius": "50%"
+      }}
+    />
+  );
+}
+
 // Types matching our existing app
 interface FeedItem {
   id: number;
@@ -70,6 +87,8 @@ export default function Home() {
   const [initialLoad, setInitialLoad] = createSignal(true);
   const [seenItemsByDate, setSeenItemsByDate] = createSignal<Map<string, Set<number>>>(new Map());
   const [orgName, setOrgName] = createSignal<string>('');
+  const [avatarCache, setAvatarCache] = createSignal<Map<string, string>>(new Map());
+  const [newItemIds, setNewItemIds] = createSignal<Set<number>>(new Set());
 
   // Check authentication on component mount
   onMount(() => {
@@ -170,11 +189,35 @@ export default function Home() {
     const seenByDate = seenItemsByDate();
     const currentSeen = seenByDate.get(currentDate) || new Set<number>();
     const newItemsToNotify: FeedItem[] = [];
+    const newAnimationIds = new Set<number>();
     
     for (const item of newItems) {
       if (!currentSeen.has(item.id)) {
         newItemsToNotify.push(item);
+        // Mark for animation if not initial load
+        if (!initialLoad()) {
+          newAnimationIds.add(item.id);
+        }
       }
+    }
+
+    // Update new items for animation
+    if (newAnimationIds.size > 0) {
+      setNewItemIds(newAnimationIds);
+      // Clear animation after a delay
+      setTimeout(() => setNewItemIds(new Set()), 2000);
+    }
+
+    // Cache avatars for all items
+    const cache = avatarCache();
+    const updatedCache = new Map(cache);
+    newItems.forEach(item => {
+      if (item.user?.avatar_url && !updatedCache.has(item.user.login)) {
+        updatedCache.set(item.user.login, item.user.avatar_url);
+      }
+    });
+    if (updatedCache.size !== cache.size) {
+      setAvatarCache(updatedCache);
     }
 
     // Only show notifications for new items if this isn't the initial load
@@ -293,10 +336,15 @@ export default function Home() {
           <ul class="feed-list">
             <For each={feedItems()}>
               {(item) => (
-                <li class={`feed-item ${item.type}-container ${item.own_comment ? `${item.type}-own` : ''}`}>
+                <li class={`feed-item ${item.type}-container ${item.own_comment ? `${item.type}-own` : ''} ${newItemIds().has(item.id) ? 'new-item' : ''}`}>
                   <a href={item.html_url} target="_blank" rel="noopener" class={`${item.type}-link`}>
                   <div class={`${item.type}-header`}>
-                    <img class={`${item.type}-avatar`} src={item.user.avatar_url} alt="avatar" />
+                    <CachedAvatar 
+                      src={item.user.avatar_url} 
+                      alt="avatar" 
+                      class={`${item.type}-avatar`} 
+                      user={item.user.login}
+                    />
                     <div class={`${item.type}-header-username`}>
                       {item.user.login}
                     </div>

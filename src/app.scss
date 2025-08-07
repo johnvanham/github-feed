@@ -633,3 +633,40 @@ ul {
     }
   }
 }
+
+/* New item animation */
+@keyframes slideInAndHighlight {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+    background-color: transparent;
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(0);
+    background-color: rgba(88, 166, 255, 0.1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    background-color: transparent;
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(88, 166, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(88, 166, 255, 0.5);
+  }
+}
+
+.new-item {
+  animation: slideInAndHighlight 2s ease-out;
+}
+
+.new-item .comment-avatar,
+.new-item .event-avatar {
+  animation: pulseGlow 1.5s ease-in-out;
+}
