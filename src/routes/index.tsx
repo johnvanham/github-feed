@@ -115,7 +115,7 @@ export default function Home() {
   return (
     <div class="github-feed">
       <div class="header">
-        <h1>GitHub Feed {loading() && !initialLoad() ? '🔄' : ''}</h1>
+        <h1>GitHub Feed</h1>
         <div class="date-input">
           <input
             type="date"
