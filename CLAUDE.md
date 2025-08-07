@@ -100,12 +100,74 @@ Features:
 - **Interactive elements**: Hover effects on comments and issue pills
 - **Typography**: Optimized font sizing and spacing throughout
 
-## Recent Changes (v1.3.0)
-1. **Data Collection**: Updated to use repository events API (fixed missing open events)
-2. **Time Period**: Changed from 30 days to 14 days for better performance
-3. **UI Enhancements**: Added markdown rendering, comment truncation, and issue pills
-4. **Auto-refresh**: Implemented 5-minute background refresh cycle
-5. **Image Processing**: Convert images to clickable [IMAGE] links
-6. **Date Picker**: Improved UX with protected clearing and compact styling
-7. **Performance**: Smart loading states prevent height jumping during refreshes
-8. **Styling**: Complete visual overhaul to match github-comments design
+## Authentication (v1.6.0+)
+### Built-in Authentication System
+The app includes a secure, application-level authentication system that replaces external basic auth:
+
+**Features:**
+- GitHub-themed login page with clean mobile-friendly design
+- JWT-like token-based authentication with 7-day expiration
+- Secure server-side token verification using HMAC signatures
+- Protected API endpoints (webhook endpoint remains public for GitHub)
+- Automatic redirect to login when unauthenticated or token expired
+- Session management with localStorage
+- Logout functionality with header button
+
+**Required Environment Variables:**
+- `AUTH_USERNAME` - Single username for application access
+- `AUTH_PASSWORD` - Single password for application access  
+- `AUTH_SECRET` - Secret key for token signing (see generation below)
+
+**Generating AUTH_SECRET:**
+```bash
+# Generate a secure random secret (recommended)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+# Or use openssl
+openssl rand -hex 32
+
+# Example output: a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
+```
+
+**Security Notes:**
+- Tokens are signed with HMAC-SHA256 for integrity verification
+- All authentication logic is server-side only (crypto operations not exposed to client)
+- Login credentials and secret should be kept secure
+- Replace basic auth in reverse proxy (Caddy/nginx) as it's no longer needed
+- Webhook endpoint (`/api/webhook`) remains unprotected for GitHub access
+
+## Technology Stack (v1.6.0)
+### Frontend & Styling
+- **Framework**: SolidJS with SolidStart (file-based routing)
+- **Styling**: SCSS with nested syntax and GitHub theme colors
+- **Build**: Vite with SASS compilation
+- **Notifications**: Browser Notification API with desktop integration
+
+### Backend & Security  
+- **Runtime**: Node.js (v22+) with ES modules
+- **Authentication**: Custom JWT-like tokens with HMAC-SHA256 signatures
+- **Database**: better-sqlite3 (v12.2.0) with synchronous API
+- **API**: RESTful endpoints with authentication middleware
+
+### Development & Deployment
+- **Build Tool**: vinxi with `node-server` preset
+- **Package Manager**: npm
+- **Container**: Multi-stage Docker build (Node.js build + runtime)
+- **Architecture**: AMD64 and ARM64 support (Raspberry Pi optimized)
+
+## Recent Changes (v1.6.0)
+1. **Authentication System**: Added application-level authentication with JWT-like tokens
+2. **SCSS Support**: Converted styling from CSS to SCSS with nested organization
+3. **Mobile Compatibility**: Replaced unreliable basic auth with proper login system
+4. **Security**: Server-side crypto operations with HMAC token signing
+5. **Login UX**: GitHub-themed login page with error handling and auto-redirect
+6. **Session Management**: Token-based sessions with localStorage persistence
+7. **API Protection**: Protected feed endpoints while keeping webhook public
+8. **Build Improvements**: Fixed client/server build compatibility with crypto separation
+
+## Previous Changes (v1.5.0)
+1. **Browser Notifications**: Desktop notifications for new GitHub activity with custom emojis
+2. **Smart Detection**: Tracks seen items to notify only on truly new entries  
+3. **Color-Matched Icons**: Notification emojis match UI state colors (🟢 open, 🟣 closed, 🔄 reopened)
+4. **Clickable Notifications**: Click to open GitHub URLs in new tab
+5. **Anti-Spam**: Only notifies for current day items (no spam when browsing history)
