@@ -58,6 +58,7 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = createSignal(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = createSignal(true);
   const [initialLoad, setInitialLoad] = createSignal(true);
+  const [seenItemIds, setSeenItemIds] = createSignal<Set<number>>(new Set());
 
   // Compute unique issues from feed items
   const uniqueIssues = createMemo(() => {
@@ -78,12 +79,97 @@ export default function Home() {
     return unique.sort((a, b) => a.issue_number - b.issue_number);
   });
 
+  // Request notification permission on component mount
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      if (Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+    }
+  };
+
+  // Show browser notification for new feed item
+  const showNotification = (item: FeedItem) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      let title = '';
+      let body = '';
+
+      if (item.type === 'comment') {
+        title = `💬 New comment by ${item.user.login}`;
+        body = `${item.repo}#${item.issue_number}: ${item.issue_title || 'Issue'}${item.body ? '\n' + item.body.substring(0, 120) + (item.body.length > 120 ? '...' : '') : ''}`;
+      } else if (item.type === 'event') {
+        switch (item.event) {
+          case 'opened':
+            title = `🟢 Issue opened by ${item.user.login}`;
+            body = `${item.repo}#${item.issue_number}: ${item.issue_title || 'New Issue'}${item.body ? '\n' + item.body.substring(0, 120) + (item.body.length > 120 ? '...' : '') : ''}`;
+            break;
+          case 'closed':
+            title = `🟣 Issue closed by ${item.user.login}`;
+            body = `${item.repo}#${item.issue_number}: ${item.issue_title || 'Issue'}`;
+            break;
+          case 'reopened':
+            title = `🔄 Issue reopened by ${item.user.login}`;
+            body = `${item.repo}#${item.issue_number}: ${item.issue_title || 'Issue'}`;
+            break;
+          default:
+            title = `📝 Issue ${item.event} by ${item.user.login}`;
+            body = `${item.repo}#${item.issue_number}: ${item.issue_title || 'Issue'}`;
+        }
+      }
+
+      const notification = new Notification(title, {
+        body,
+        icon: item.user.avatar_url,
+        tag: `feed-item-${item.id}`, // Prevent duplicate notifications
+        requireInteraction: false
+      });
+
+      // Close notification after 6 seconds
+      setTimeout(() => notification.close(), 6000);
+
+      // Handle click to open GitHub URL
+      notification.onclick = () => {
+        window.open(item.html_url, '_blank');
+        notification.close();
+      };
+    }
+  };
+
+  // Check for new items and show notifications
+  const checkForNewItems = (newItems: FeedItem[]) => {
+    const currentSeen = seenItemIds();
+    const newItemsToNotify: FeedItem[] = [];
+    
+    for (const item of newItems) {
+      if (!currentSeen.has(item.id)) {
+        newItemsToNotify.push(item);
+      }
+    }
+
+    // Only show notifications for new items if this isn't the initial load
+    if (!initialLoad() && newItemsToNotify.length > 0) {
+      // Only notify for today's items to avoid spam when changing dates
+      const today = new Date().toISOString().split('T')[0];
+      if (selectedDate() === today) {
+        newItemsToNotify.forEach(item => showNotification(item));
+      }
+    }
+
+    // Update seen items
+    const allItemIds = new Set(newItems.map(item => item.id));
+    setSeenItemIds(allItemIds);
+  };
+
   // Load feed items function
   const loadFeedData = async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/feed?date=${selectedDate()}`);
       const data = await response.json();
+      
+      // Check for new items and show notifications
+      checkForNewItems(data);
+      
       setFeedItems(data);
     } catch (error) {
       console.error('Error loading feed:', error);
@@ -99,8 +185,11 @@ export default function Home() {
     loadFeedData();
   });
 
-  // Auto-refresh every 60 seconds when viewing current date
+  // Auto-refresh every 60 seconds when viewing current date and request notifications
   onMount(() => {
+    // Request notification permission
+    requestNotificationPermission();
+    
     const interval = setInterval(() => {
       const today = new Date().toISOString().split('T')[0];
       if (selectedDate() === today) {
