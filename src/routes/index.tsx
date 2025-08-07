@@ -124,9 +124,6 @@ export default function Home() {
         requireInteraction: false
       });
 
-      // Close notification after 6 seconds
-      setTimeout(() => notification.close(), 6000);
-
       // Handle click to open GitHub URL
       notification.onclick = () => {
         window.open(item.html_url, '_blank');
