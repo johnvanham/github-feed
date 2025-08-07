@@ -3,6 +3,14 @@ import { createAsync, useNavigate } from "@solidjs/router";
 import { marked } from "marked";
 import { isAuthenticated, logout, getAuthToken } from "../lib/auth";
 
+// Format repo name by removing configured org prefix
+function formatRepoName(fullRepoName: string, orgName?: string): string {
+  if (orgName && fullRepoName.startsWith(`${orgName}/`)) {
+    return fullRepoName.substring(orgName.length + 1);
+  }
+  return fullRepoName;
+}
+
 // Types matching our existing app
 interface FeedItem {
   id: number;
@@ -61,6 +69,7 @@ export default function Home() {
   const [loading, setLoading] = createSignal(true);
   const [initialLoad, setInitialLoad] = createSignal(true);
   const [seenItemsByDate, setSeenItemsByDate] = createSignal<Map<string, Set<number>>>(new Map());
+  const [orgName, setOrgName] = createSignal<string>('');
 
   // Check authentication on component mount
   onMount(() => {
@@ -107,26 +116,36 @@ export default function Home() {
       let title = '';
       let body = '';
 
+      const formattedRepo = formatRepoName(item.repo, orgName());
+      
       if (item.type === 'comment') {
         title = `💬 New comment by ${item.user.login}`;
-        body = `${item.repo}#${item.issue_number}: ${item.issue_title || 'Issue'}${item.body ? '\n' + item.body.substring(0, 120) + (item.body.length > 120 ? '...' : '') : ''}`;
+        body = `${formattedRepo}#${item.issue_number}: ${item.issue_title || 'Issue'}`;
+        if (item.body) {
+          const commentText = item.body.substring(0, 120) + (item.body.length > 120 ? '...' : '');
+          body += `\n\n"${commentText}"`;
+        }
       } else if (item.type === 'event') {
         switch (item.event) {
           case 'opened':
             title = `🟢 Issue opened by ${item.user.login}`;
-            body = `${item.repo}#${item.issue_number}: ${item.issue_title || 'New Issue'}${item.body ? '\n' + item.body.substring(0, 120) + (item.body.length > 120 ? '...' : '') : ''}`;
+            body = `${formattedRepo}#${item.issue_number}: ${item.issue_title || 'New Issue'}`;
+            if (item.body) {
+              const descriptionText = item.body.substring(0, 120) + (item.body.length > 120 ? '...' : '');
+              body += `\n\n"${descriptionText}"`;
+            }
             break;
           case 'closed':
             title = `🟣 Issue closed by ${item.user.login}`;
-            body = `${item.repo}#${item.issue_number}: ${item.issue_title || 'Issue'}`;
+            body = `${formattedRepo}#${item.issue_number}: ${item.issue_title || 'Issue'}`;
             break;
           case 'reopened':
             title = `🔄 Issue reopened by ${item.user.login}`;
-            body = `${item.repo}#${item.issue_number}: ${item.issue_title || 'Issue'}`;
+            body = `${formattedRepo}#${item.issue_number}: ${item.issue_title || 'Issue'}`;
             break;
           default:
             title = `📝 Issue ${item.event} by ${item.user.login}`;
-            body = `${item.repo}#${item.issue_number}: ${item.issue_title || 'Issue'}`;
+            body = `${formattedRepo}#${item.issue_number}: ${item.issue_title || 'Issue'}`;
         }
       }
 
@@ -195,10 +214,19 @@ export default function Home() {
       
       const data = await response.json();
       
-      // Check for new items and show notifications
-      checkForNewItems(data);
+      // Handle new API response format with orgName
+      const items = data.items || data; // Support both old and new format
+      const apiOrgName = data.orgName || '';
       
-      setFeedItems(data);
+      // Update org name if provided
+      if (apiOrgName) {
+        setOrgName(apiOrgName);
+      }
+      
+      // Check for new items and show notifications
+      checkForNewItems(items);
+      
+      setFeedItems(items);
     } catch (error) {
       console.error('Error loading feed:', error);
       setFeedItems([]);
@@ -301,7 +329,7 @@ export default function Home() {
                   <div class={`${item.type}-footer`}>
                     <div class={`${item.type}-issue-details`}>
                       <span class="issue-link">#{item.issue_number}</span>
-                      <span class="repo-name">{item.repo}</span>
+                      <span class="repo-name">{formatRepoName(item.repo, orgName())}</span>
                       <Show when={item.issue_title}>
                         <span class="issue-title-footer"> - <strong>{item.issue_title}</strong></span>
                       </Show>
@@ -349,7 +377,7 @@ export default function Home() {
                   <For each={uniqueIssues()}>
                     {(issue) => (
                       <a href={issue.html_url} target="_blank" rel="noopener" class="issue-link pill">
-                        {issue.repo}#{issue.issue_number}
+                        {formatRepoName(issue.repo, orgName())}#{issue.issue_number}
                       </a>
                     )}
                   </For>
