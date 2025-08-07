@@ -1,7 +1,7 @@
 import { Router } from "@solidjs/router";
 import { FileRoutes } from "@solidjs/start/router";
 import { Suspense } from "solid-js";
-import { MetaProvider, Meta, Title } from "@solidjs/meta";
+import { MetaProvider, Meta, Title, Link } from "@solidjs/meta";
 import "./app.scss";
 
 export default function App() {
@@ -14,9 +14,9 @@ export default function App() {
           <Meta name="viewport" content="width=device-width, initial-scale=1" />
           
           {/* Favicon */}
-          <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-          <link rel="alternate icon" href="/favicon.ico" />
-          <link rel="apple-touch-icon" href="/favicon.svg" />
+          <Link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+          <Link rel="alternate icon" href="/favicon.ico" />
+          <Link rel="apple-touch-icon" href="/favicon.svg" />
           
           <main>
             <Suspense>{props.children}</Suspense>
