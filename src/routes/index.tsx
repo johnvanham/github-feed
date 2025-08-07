@@ -60,7 +60,7 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = createSignal(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = createSignal(true);
   const [initialLoad, setInitialLoad] = createSignal(true);
-  const [seenItemIds, setSeenItemIds] = createSignal<Set<number>>(new Set());
+  const [seenItemsByDate, setSeenItemsByDate] = createSignal<Map<string, Set<number>>>(new Map());
 
   // Check authentication on component mount
   onMount(() => {
@@ -147,7 +147,9 @@ export default function Home() {
 
   // Check for new items and show notifications
   const checkForNewItems = (newItems: FeedItem[]) => {
-    const currentSeen = seenItemIds();
+    const currentDate = selectedDate();
+    const seenByDate = seenItemsByDate();
+    const currentSeen = seenByDate.get(currentDate) || new Set<number>();
     const newItemsToNotify: FeedItem[] = [];
     
     for (const item of newItems) {
@@ -160,14 +162,16 @@ export default function Home() {
     if (!initialLoad() && newItemsToNotify.length > 0) {
       // Only notify for today's items to avoid spam when changing dates
       const today = new Date().toISOString().split('T')[0];
-      if (selectedDate() === today) {
+      if (currentDate === today) {
         newItemsToNotify.forEach(item => showNotification(item));
       }
     }
 
-    // Update seen items
+    // Update seen items for this specific date
+    const updatedSeenByDate = new Map(seenByDate);
     const allItemIds = new Set(newItems.map(item => item.id));
-    setSeenItemIds(allItemIds);
+    updatedSeenByDate.set(currentDate, allItemIds);
+    setSeenItemsByDate(updatedSeenByDate);
   };
 
   // Load feed items function
