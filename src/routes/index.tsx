@@ -99,6 +99,8 @@ export default function Home() {
   const [orgName, setOrgName] = createSignal<string>('');
   const [avatarCache, setAvatarCache] = createSignal<Map<string, string>>(new Map());
   const [newItemIds, setNewItemIds] = createSignal<Set<number>>(new Set());
+  const [lastRefresh, setLastRefresh] = createSignal<Date | null>(null);
+  const [nextRefreshCountdown, setNextRefreshCountdown] = createSignal<number>(60);
 
   // Check authentication on component mount
   onMount(() => {
@@ -280,6 +282,7 @@ export default function Home() {
       checkForNewItems(items);
       
       setFeedItems(items);
+      setLastRefresh(new Date());
     } catch (error) {
       console.error('Error loading feed:', error);
       setFeedItems([]);
@@ -294,17 +297,32 @@ export default function Home() {
     loadFeedData();
   });
 
-  // Auto-refresh every 60 seconds when viewing current date
+  // Auto-refresh with countdown timer when viewing current date
   onMount(() => {    
-    const interval = setInterval(() => {
+    let countdownSeconds = 60;
+    setNextRefreshCountdown(countdownSeconds);
+    
+    const countdownInterval = setInterval(() => {
       const today = new Date().toISOString().split('T')[0];
+      
       if (selectedDate() === today) {
-        loadFeedData();
+        countdownSeconds--;
+        setNextRefreshCountdown(countdownSeconds);
+        
+        if (countdownSeconds <= 0) {
+          loadFeedData();
+          countdownSeconds = 60; // Reset countdown
+          setNextRefreshCountdown(countdownSeconds);
+        }
+      } else {
+        // Reset countdown when not on current date
+        countdownSeconds = 60;
+        setNextRefreshCountdown(countdownSeconds);
       }
-    }, 60000); // 60 seconds
+    }, 1000); // Update every second
     
     // Cleanup interval on unmount
-    return () => clearInterval(interval);
+    return () => clearInterval(countdownInterval);
   });
 
   return (
@@ -454,7 +472,29 @@ export default function Home() {
       </Show>
 
       <footer class="version-footer">
-        <span class="version-text">GitHub Feed v{getAppVersion()}</span>
+        <div class="footer-content">
+          <span class="version-text">GitHub Feed v{getAppVersion()}</span>
+          <Show when={selectedDate() === new Date().toISOString().split('T')[0]}>
+            <div class="refresh-info">
+              <Show when={loading() && !initialLoad()}>
+                <span class="refresh-status refreshing">↻ Refreshing...</span>
+              </Show>
+              <Show when={!loading() || initialLoad()}>
+                <span class="refresh-status">
+                  Next: {Math.floor(nextRefreshCountdown() / 60)}:{String(nextRefreshCountdown() % 60).padStart(2, '0')}
+                </span>
+              </Show>
+              <Show when={lastRefresh()}>
+                <span class="last-refresh">
+                  Last: {lastRefresh()?.toLocaleTimeString('en-GB', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </span>
+              </Show>
+            </div>
+          </Show>
+        </div>
       </footer>
     </div>
   );
