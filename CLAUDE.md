@@ -155,7 +155,23 @@ openssl rand -hex 32
 - **Container**: Multi-stage Docker build (Node.js build + runtime)
 - **Architecture**: AMD64 and ARM64 support (Raspberry Pi optimized)
 
-## Recent Changes (v1.6.0)
+## Version Management
+**IMPORTANT**: When building/deploying new versions, ensure package.json version matches Docker tag:
+- Update `package.json` version field (e.g., "1.7.5")
+- Build Docker image with matching tag (e.g., `github-feed:v1.7.5`)
+- App version footer dynamically reads from package.json at runtime
+- This prevents version display mismatches in the UI
+
+## Recent Changes (v1.7.5)
+1. **Dynamic Version Loading**: App version now reads from package.json at runtime
+2. **Refresh Status Footer**: Live countdown timer and last refresh timestamp
+3. **Improved Animations**: Dramatic slide-down expansion for new items (Firefox compatible)
+4. **Avatar Caching**: Prevents avatar reloads on refresh with per-user cache
+5. **Favicon Optimization**: Fixed duplicate loading issues
+6. **Short Repo Names**: Display repo names without org prefix for configured organization
+7. **Enhanced Notifications**: Better formatting with separated issue info and quoted text
+
+## Previous Changes (v1.6.0)
 1. **Authentication System**: Added application-level authentication with JWT-like tokens
 2. **SCSS Support**: Converted styling from CSS to SCSS with nested organization
 3. **Mobile Compatibility**: Replaced unreliable basic auth with proper login system
