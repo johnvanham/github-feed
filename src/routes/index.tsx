@@ -370,9 +370,10 @@ export default function Home() {
         <Show when={feedItems().length === 0} fallback={
           <ul class="feed-list">
             <Presence>
-              <For each={feedItems()}>
+              <For each={feedItems()} fallback={<div>No items</div>}>
                 {(item) => (
                   <Motion.li
+                    key={item.id}
                     class={`feed-item ${item.type}-container ${item.own_comment ? `${item.type}-own` : ''}`}
                     initial={{
                       opacity: 0,
