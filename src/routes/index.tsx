@@ -2,16 +2,22 @@ import { createSignal, createEffect, For, Show, createMemo, onMount } from "soli
 import { createAsync, useNavigate } from "@solidjs/router";
 import { marked } from "marked";
 import { isAuthenticated, logout, getAuthToken } from "../lib/auth";
+import { action } from "@solidjs/router";
+import fs from "fs";
+import path from "path";
 
-// Get app version from package.json
-const getAppVersion = () => {
+// Server action to get app version from package.json
+const getAppVersion = action(async () => {
+  "use server";
   try {
-    // This will be replaced at build time
-    return "1.7.1";
-  } catch {
+    const packageJsonPath = path.resolve(process.cwd(), "package.json");
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+    return packageJson.version || "unknown";
+  } catch (error) {
+    console.error("Error reading version from package.json:", error);
     return "dev";
   }
-};
+});
 
 // Format repo name by removing configured org prefix
 function formatRepoName(fullRepoName: string, orgName?: string): string {
@@ -91,6 +97,7 @@ function truncate(str: string, paras: number = 3): string {
 
 export default function Home() {
   const navigate = useNavigate();
+  const appVersion = createAsync(() => getAppVersion());
   const [feedItems, setFeedItems] = createSignal<FeedItem[]>([]);
   const [selectedDate, setSelectedDate] = createSignal(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = createSignal(true);
@@ -473,7 +480,7 @@ export default function Home() {
 
       <footer class="version-footer">
         <div class="footer-content">
-          <span class="version-text">GitHub Feed v{getAppVersion()}</span>
+          <span class="version-text">GitHub Feed v{appVersion() || "loading..."}</span>
           <Show when={selectedDate() === new Date().toISOString().split('T')[0]}>
             <div class="refresh-info">
               <Show when={loading() && !initialLoad()}>
