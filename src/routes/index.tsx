@@ -373,7 +373,6 @@ export default function Home() {
               <For each={feedItems()} fallback={<div>No items</div>}>
                 {(item) => (
                   <Motion.li
-                    key={item.id}
                     class={`feed-item ${item.type}-container ${item.own_comment ? `${item.type}-own` : ''}`}
                     initial={{
                       opacity: 0,
