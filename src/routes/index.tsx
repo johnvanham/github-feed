@@ -1,13 +1,12 @@
 import { createSignal, createEffect, For, Show, createMemo, onMount } from "solid-js";
-import { createAsync, useNavigate } from "@solidjs/router";
+import { useNavigate, cache, createAsync } from "@solidjs/router";
 import { marked } from "marked";
 import { isAuthenticated, logout, getAuthToken } from "../lib/auth";
-import { action } from "@solidjs/router";
 import fs from "fs";
 import path from "path";
 
-// Server action to get app version from package.json
-const getAppVersion = action(async () => {
+// Server-side cached version loader
+const getAppVersion = cache(async () => {
   "use server";
   try {
     const packageJsonPath = path.resolve(process.cwd(), "package.json");
@@ -17,7 +16,7 @@ const getAppVersion = action(async () => {
     console.error("Error reading version from package.json:", error);
     return "dev";
   }
-});
+}, "app-version");
 
 // Format repo name by removing configured org prefix
 function formatRepoName(fullRepoName: string, orgName?: string): string {
