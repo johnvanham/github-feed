@@ -214,8 +214,8 @@ export default function Home() {
     // Update new items for animation
     if (newAnimationIds.size > 0) {
       setNewItemIds(newAnimationIds);
-      // Clear animation after a delay
-      setTimeout(() => setNewItemIds(new Set()), 2000);
+      // Clear animation after a delay (matches 2.5s animation duration)
+      setTimeout(() => setNewItemIds(new Set()), 3000);
     }
 
     // Cache avatars for all items
