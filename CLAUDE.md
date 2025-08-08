@@ -34,10 +34,18 @@ npm run build
 node .output/server/index.mjs
 
 # Docker build (ARM64 optimized)
-podman build --platform linux/arm64 -t github-feed:latest .
+podman build --platform linux/arm64 -t github-feed:v1.8.0 .
+
+# Tag for GitHub Container Registry
+podman tag github-feed:v1.8.0 ghcr.io/johnvanham/github-feed:v1.8.0
+podman tag github-feed:v1.8.0 ghcr.io/johnvanham/github-feed:latest
+
+# Push to GitHub Container Registry
+podman push ghcr.io/johnvanham/github-feed:v1.8.0
+podman push ghcr.io/johnvanham/github-feed:latest
 
 # Run container
-podman run -d --name github-feed -p 3000:3000 -v /data/github-feed:/data github-feed:latest
+podman run -d --name github-feed -p 3000:3000 -v /data/github-feed:/data ghcr.io/johnvanham/github-feed:latest
 
 # Data population script
 node populate-github-data.cjs
@@ -154,13 +162,34 @@ openssl rand -hex 32
 - **Package Manager**: npm
 - **Container**: Multi-stage Docker build (Node.js build + runtime)
 - **Architecture**: AMD64 and ARM64 support (Raspberry Pi optimized)
+- **Registry**: GitHub Container Registry at `ghcr.io/johnvanham/github-feed`
 
 ## Version Management
 **IMPORTANT**: When building/deploying new versions, ensure package.json version matches Docker tag:
-- Update `package.json` version field (e.g., "1.7.5")
-- Build Docker image with matching tag (e.g., `github-feed:v1.7.5`)
+- Update `package.json` version field (e.g., "1.8.0")
+- Build Docker image with matching tag (e.g., `github-feed:v1.8.0`)
 - App version footer dynamically reads from package.json at runtime
 - This prevents version display mismatches in the UI
+
+## Container Registry Deployment
+**GitHub Container Registry Details:**
+- **Registry URL**: `ghcr.io/johnvanham/github-feed`
+- **Username**: `johnvanham`
+- **Authentication**: Must be logged in via `podman login ghcr.io`
+
+**Complete Deployment Process:**
+```bash
+# 1. Build with version tag
+podman build --platform linux/arm64 -t github-feed:v1.8.0 .
+
+# 2. Tag for registry (use correct username!)
+podman tag github-feed:v1.8.0 ghcr.io/johnvanham/github-feed:v1.8.0
+podman tag github-feed:v1.8.0 ghcr.io/johnvanham/github-feed:latest
+
+# 3. Push to GitHub Container Registry
+podman push ghcr.io/johnvanham/github-feed:v1.8.0
+podman push ghcr.io/johnvanham/github-feed:latest
+```
 
 ## Recent Changes (v1.8.0)
 1. **Motion.dev Animations**: Replaced CSS animations with solid-motionone library for notification-style animations
