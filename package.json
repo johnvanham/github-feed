@@ -1,6 +1,6 @@
 {
   "name": "github-feed",
-  "version": "1.7.5",
+  "version": "1.8.0",
   "type": "module",
   "description": "Real-time GitHub feed using webhooks - built with SolidJS and SolidStart",
   "scripts": {
@@ -16,6 +16,7 @@
     "better-sqlite3": "^12.2.0",
     "marked": "^16.1.2",
     "solid-js": "^1.9.5",
+    "solid-motionone": "^1.0.4",
     "vinxi": "^0.5.7"
   },
   "engines": {

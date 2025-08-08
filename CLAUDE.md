@@ -162,7 +162,15 @@ openssl rand -hex 32
 - App version footer dynamically reads from package.json at runtime
 - This prevents version display mismatches in the UI
 
-## Recent Changes (v1.7.5)
+## Recent Changes (v1.8.0)
+1. **Motion.dev Animations**: Replaced CSS animations with solid-motionone library for notification-style animations
+2. **Enhanced New Item Animations**: New items now slide in with smooth scale and opacity transitions
+3. **Layout Animations**: Added automatic layout animations when items are added/removed
+4. **Avatar Highlighting**: New items get subtle avatar scaling and background highlighting
+5. **Notification-Style Effects**: Animations mimic modern notification list patterns
+6. **Performance Optimized**: Uses solid-motionone for hardware-accelerated animations
+
+## Previous Changes (v1.7.5)
 1. **Dynamic Version Loading**: App version now reads from package.json at runtime
 2. **Refresh Status Footer**: Live countdown timer and last refresh timestamp
 3. **Improved Animations**: Dramatic slide-down expansion for new items (Firefox compatible)
