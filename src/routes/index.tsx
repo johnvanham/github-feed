@@ -369,10 +369,9 @@ export default function Home() {
       <Show when={loading() && initialLoad()} fallback={
         <Show when={feedItems().length === 0} fallback={
           <ul class="feed-list">
-            <Presence>
-              <For each={feedItems()} fallback={<div>No items</div>}>
-                {(item) => (
-                  <Motion.li
+            <For each={feedItems()} fallback={<div>No items</div>}>
+              {(item) => (
+                <Motion.li
                     class={`feed-item ${item.type}-container ${item.own_comment ? `${item.type}-own` : ''}`}
                     initial={{
                       opacity: 0,
@@ -486,8 +485,7 @@ export default function Home() {
                     </a>
                   </Motion.li>
                 )}
-              </For>
-            </Presence>
+            </For>
             
             {/* Issue pills at the bottom */}
             <Show when={uniqueIssues().length > 0}>
