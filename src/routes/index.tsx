@@ -423,7 +423,11 @@ export default function Home() {
                         opacity: 0,
                         scale: 0.8,
                         y: -30
-                      } : {}}
+                      } : {
+                        opacity: 1,
+                        scale: 1,
+                        y: 0
+                      }}
                       animate={{
                         opacity: 1,
                         scale: 1,
@@ -433,7 +437,11 @@ export default function Home() {
                         opacity: 0,
                         scale: 0.8,
                         y: -30
-                      } : {}}
+                      } : {
+                        opacity: 1,
+                        scale: 1,
+                        y: 0
+                      }}
                       transition={isNewItem() ? {
                         duration: 0.4,
                         easing: [0.25, 0.46, 0.45, 0.94]
