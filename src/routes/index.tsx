@@ -415,48 +415,40 @@ export default function Home() {
           <ul class="feed-list">
             <For each={feedItems()} fallback={<div>No items</div>}>
               {(item) => {
-                const isNewItem = () => newItemIds().has(item.id);
+                // Capture animation state at render time to avoid reactivity issues
+                const shouldAnimate = newItemIds().has(item.id);
+                const animationProps = shouldAnimate ? {
+                  initial: { opacity: 0, scale: 0.8, y: -30 },
+                  animate: { opacity: 1, scale: 1, y: 0 },
+                  exit: { opacity: 0, scale: 0.8, y: -30 },
+                  transition: { duration: 0.4, easing: [0.25, 0.46, 0.45, 0.94] },
+                  layout: true
+                } : {
+                  initial: { opacity: 1, scale: 1, y: 0 },
+                  animate: { opacity: 1, scale: 1, y: 0 },
+                  exit: { opacity: 1, scale: 1, y: 0 },
+                  transition: { duration: 0 },
+                  layout: false
+                };
+                
                 return (
                   <Motion.li
                       class={`feed-item ${item.type}-container ${item.own_comment ? `${item.type}-own` : ''}`}
-                      initial={isNewItem() ? {
-                        opacity: 0,
-                        scale: 0.8,
-                        y: -30
-                      } : {
-                        opacity: 1,
-                        scale: 1,
-                        y: 0
-                      }}
-                      animate={{
-                        opacity: 1,
-                        scale: 1,
-                        y: 0
-                      }}
-                      exit={isNewItem() ? {
-                        opacity: 0,
-                        scale: 0.8,
-                        y: -30
-                      } : {
-                        opacity: 1,
-                        scale: 1,
-                        y: 0
-                      }}
-                      transition={isNewItem() ? {
-                        duration: 0.4,
-                        easing: [0.25, 0.46, 0.45, 0.94]
-                      } : { duration: 0 }}
-                      layout={isNewItem()}
+                      initial={animationProps.initial}
+                      animate={animationProps.animate}
+                      exit={animationProps.exit}
+                      transition={animationProps.transition}
+                      layout={animationProps.layout}
                     >
                     <a href={item.html_url} target="_blank" rel="noopener" class={`${item.type}-link`}>
                       <Motion.div 
                         class={`${item.type}-header`}
-                        initial={newItemIds().has(item.id) ? { backgroundColor: "rgba(88, 166, 255, 0.15)" } : {}}
+                        initial={shouldAnimate ? { backgroundColor: "rgba(88, 166, 255, 0.15)" } : {}}
                         animate={{ backgroundColor: "transparent" }}
                         transition={{ duration: 2.0, delay: 0.5 }}
                       >
                         <Motion.div
-                          initial={newItemIds().has(item.id) ? { scale: 1.2 } : {}}
+                          initial={shouldAnimate ? { scale: 1.2 } : {}}
                           animate={{ scale: 1 }}
                           transition={{ duration: 0.6, easing: "ease-out" }}
                         >
