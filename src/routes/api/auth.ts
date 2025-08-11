@@ -28,7 +28,10 @@ export async function POST(event: APIEvent) {
         token 
       }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Set-Cookie': `github-feed-auth=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${7 * 24 * 60 * 60}` // 7 days
+        }
       });
     } else {
       return new Response(JSON.stringify({ 

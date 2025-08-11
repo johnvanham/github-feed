@@ -1,10 +1,36 @@
 import { createSignal, createEffect, For, Show, createMemo, onMount } from "solid-js";
-import { useNavigate, cache, createAsync } from "@solidjs/router";
+import { useNavigate, cache, createAsync, redirect } from "@solidjs/router";
 import { marked } from "marked";
 import { isAuthenticated, logout, getAuthToken } from "../lib/auth";
 import { Motion, Presence } from "solid-motionone";
+import { checkServerAuth } from "../lib/auth.server";
+import { getCookie } from "vinxi/http";
 import fs from "fs";
 import path from "path";
+
+// Server-side authentication check
+const checkAuth = cache(async () => {
+  "use server";
+  try {
+    // Check for auth token in cookie
+    const authCookie = getCookie("github-feed-auth");
+    if (!authCookie) {
+      throw redirect("/login");
+    }
+    
+    // Verify the token using server-side verification
+    const { verifyToken } = await import("../lib/auth.server");
+    const tokenData = verifyToken(authCookie);
+    if (!tokenData) {
+      throw redirect("/login");
+    }
+    
+    return { authenticated: true, username: tokenData.username };
+  } catch (error) {
+    if (error instanceof Response) throw error; // Re-throw redirects
+    throw redirect("/login");
+  }
+}, "auth-check");
 
 // Server-side cached version loader
 const getAppVersion = cache(async () => {
@@ -97,6 +123,7 @@ function truncate(str: string, paras: number = 3): string {
 
 export default function Home() {
   const navigate = useNavigate();
+  const authCheck = createAsync(() => checkAuth());
   const appVersion = createAsync(() => getAppVersion());
   const [feedItems, setFeedItems] = createSignal<FeedItem[]>([]);
   const [selectedDate, setSelectedDate] = createSignal(new Date().toISOString().split('T')[0]);

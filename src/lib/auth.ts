@@ -9,9 +9,18 @@ export function isAuthenticated(): boolean {
   return true;
 }
 
-export function logout(): void {
+export async function logout(): Promise<void> {
   if (typeof window !== 'undefined') {
+    // Clear client-side storage
     localStorage.removeItem('github-feed-auth');
+    
+    // Call server-side logout to clear cookie
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Logout request failed:', error);
+    }
+    
     window.location.href = '/login';
   }
 }
