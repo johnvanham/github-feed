@@ -27,7 +27,8 @@ export async function GET(event: APIEvent) {
 
     return new Response(JSON.stringify({
       items: sortedEvents,
-      orgName: process.env.GITHUB_ORG_NAME || ''
+      orgName: process.env.GITHUB_ORG_NAME || '',
+      ownUsername: process.env.GITHUB_OWN_USERNAME || ''
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

@@ -131,6 +131,7 @@ export default function Home() {
   const [initialLoad, setInitialLoad] = createSignal(true);
   const [seenItemsByDate, setSeenItemsByDate] = createSignal<Map<string, Set<number>>>(new Map());
   const [orgName, setOrgName] = createSignal<string>('');
+  const [ownUsername, setOwnUsername] = createSignal<string>('');
   const [avatarCache, setAvatarCache] = createSignal<Map<string, string>>(new Map());
   const [newItemIds, setNewItemIds] = createSignal<Set<number>>(new Set());
   const [lastRefresh, setLastRefresh] = createSignal<Date | null>(null);
@@ -181,6 +182,11 @@ export default function Home() {
 
   // Show browser notification for new feed item
   const showNotification = (item: FeedItem) => {
+    // Skip notifications for own account
+    if (ownUsername() && item.user.login === ownUsername()) {
+      return;
+    }
+    
     if ('Notification' in window && Notification.permission === 'granted') {
       let title = '';
       let body = '';
@@ -320,13 +326,19 @@ export default function Home() {
       
       const data = await response.json();
       
-      // Handle new API response format with orgName
+      // Handle new API response format with orgName and ownUsername
       const items = data.items || data; // Support both old and new format
       const apiOrgName = data.orgName || '';
+      const apiOwnUsername = data.ownUsername || '';
       
       // Update org name if provided
       if (apiOrgName) {
         setOrgName(apiOrgName);
+      }
+      
+      // Update own username if provided
+      if (apiOwnUsername) {
+        setOwnUsername(apiOwnUsername);
       }
       
       // Check for new items and show notifications
