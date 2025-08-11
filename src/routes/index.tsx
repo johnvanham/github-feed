@@ -135,6 +135,7 @@ export default function Home() {
   const [newItemIds, setNewItemIds] = createSignal<Set<number>>(new Set());
   const [lastRefresh, setLastRefresh] = createSignal<Date | null>(null);
   const [nextRefreshCountdown, setNextRefreshCountdown] = createSignal<number>(60);
+  const [previousDate, setPreviousDate] = createSignal<string>('');
 
   // Check authentication on component mount
   onMount(() => {
@@ -142,6 +143,9 @@ export default function Home() {
       navigate('/login');
       return;
     }
+    
+    // Initialize previous date to current date to avoid animations on first load
+    setPreviousDate(selectedDate());
     
     // Request notification permission if authenticated
     requestNotificationPermission();
@@ -237,21 +241,34 @@ export default function Home() {
     const newItemsToNotify: FeedItem[] = [];
     const newAnimationIds = new Set<number>();
     
+    // Check if we're switching dates vs refreshing same date
+    const isDateChange = previousDate() !== currentDate;
+    
     for (const item of newItems) {
       if (!currentSeen.has(item.id)) {
         newItemsToNotify.push(item);
-        // Mark for animation if not initial load
-        if (!initialLoad()) {
+        // Only animate if:
+        // 1. Not initial load
+        // 2. NOT switching dates (only on refresh of same date)
+        // 3. We're viewing today's date (only animate new items on current date)
+        const today = new Date().toISOString().split('T')[0];
+        if (!initialLoad() && !isDateChange && currentDate === today) {
           newAnimationIds.add(item.id);
         }
       }
     }
 
+    // Update previous date tracking
+    setPreviousDate(currentDate);
+
     // Update new items for animation
     if (newAnimationIds.size > 0) {
       setNewItemIds(newAnimationIds);
-      // Clear animation after a delay (matches 2.5s animation duration)
+      // Clear animation after a delay (matches animation duration)
       setTimeout(() => setNewItemIds(new Set()), 3000);
+    } else {
+      // Clear any existing animations when no new items
+      setNewItemIds(new Set());
     }
 
     // Cache avatars for all items
@@ -397,30 +414,32 @@ export default function Home() {
         <Show when={feedItems().length === 0} fallback={
           <ul class="feed-list">
             <For each={feedItems()} fallback={<div>No items</div>}>
-              {(item) => (
-                <Motion.li
-                    class={`feed-item ${item.type}-container ${item.own_comment ? `${item.type}-own` : ''}`}
-                    initial={{
-                      opacity: 0,
-                      scale: 0.8,
-                      y: -30
-                    }}
-                    animate={{
-                      opacity: 1,
-                      scale: 1,
-                      y: 0
-                    }}
-                    exit={{
-                      opacity: 0,
-                      scale: 0.8,
-                      y: -30
-                    }}
-                    transition={{
-                      duration: 0.4,
-                      easing: [0.25, 0.46, 0.45, 0.94]
-                    }}
-                    layout
-                  >
+              {(item) => {
+                const isNewItem = () => newItemIds().has(item.id);
+                return (
+                  <Motion.li
+                      class={`feed-item ${item.type}-container ${item.own_comment ? `${item.type}-own` : ''}`}
+                      initial={isNewItem() ? {
+                        opacity: 0,
+                        scale: 0.8,
+                        y: -30
+                      } : {}}
+                      animate={{
+                        opacity: 1,
+                        scale: 1,
+                        y: 0
+                      }}
+                      exit={isNewItem() ? {
+                        opacity: 0,
+                        scale: 0.8,
+                        y: -30
+                      } : {}}
+                      transition={isNewItem() ? {
+                        duration: 0.4,
+                        easing: [0.25, 0.46, 0.45, 0.94]
+                      } : { duration: 0 }}
+                      layout={isNewItem()}
+                    >
                     <a href={item.html_url} target="_blank" rel="noopener" class={`${item.type}-link`}>
                       <Motion.div 
                         class={`${item.type}-header`}
@@ -511,7 +530,8 @@ export default function Home() {
                       </div>
                     </a>
                   </Motion.li>
-                )}
+                );
+              }}
             </For>
             
             {/* Issue pills at the bottom */}
