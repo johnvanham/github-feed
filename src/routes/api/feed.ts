@@ -26,9 +26,7 @@ export async function GET(event: APIEvent) {
     console.log(`[${new Date().toISOString()}] Feed API: returning ${sortedEvents.length} items${dateParam ? ` for date ${dateParam}` : ''} for user ${auth.username}`);
 
     return new Response(JSON.stringify({
-      items: sortedEvents,
-      orgName: process.env.GITHUB_ORG_NAME || '',
-      ownUsername: process.env.GITHUB_OWN_USERNAME || ''
+      items: sortedEvents
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

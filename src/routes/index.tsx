@@ -45,6 +45,12 @@ const getAppVersion = cache(async () => {
   }
 }, "app-version");
 
+// Server-side cached org name loader
+const getOrgName = cache(async () => {
+  "use server";
+  return process.env.GITHUB_ORG_NAME || '';
+}, "org-name");
+
 // Format repo name by removing configured org prefix
 function formatRepoName(fullRepoName: string, orgName?: string): string {
   if (orgName && fullRepoName.startsWith(`${orgName}/`)) {
@@ -125,13 +131,12 @@ export default function Home() {
   const navigate = useNavigate();
   const authCheck = createAsync(() => checkAuth());
   const appVersion = createAsync(() => getAppVersion());
+  const orgName = createAsync(() => getOrgName());
   const [feedItems, setFeedItems] = createSignal<FeedItem[]>([]);
   const [selectedDate, setSelectedDate] = createSignal(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = createSignal(true);
   const [initialLoad, setInitialLoad] = createSignal(true);
   const [seenItemsByDate, setSeenItemsByDate] = createSignal<Map<string, Set<number>>>(new Map());
-  const [orgName, setOrgName] = createSignal<string>('');
-  const [ownUsername, setOwnUsername] = createSignal<string>('');
   const [avatarCache, setAvatarCache] = createSignal<Map<string, string>>(new Map());
   const [newItemIds, setNewItemIds] = createSignal<Set<number>>(new Set());
   const [lastRefresh, setLastRefresh] = createSignal<Date | null>(null);
@@ -183,7 +188,7 @@ export default function Home() {
   // Show browser notification for new feed item
   const showNotification = (item: FeedItem) => {
     // Skip notifications for own account
-    if (ownUsername() && item.user.login === ownUsername()) {
+    if (item.own_comment) {
       return;
     }
     
@@ -191,7 +196,7 @@ export default function Home() {
       let title = '';
       let body = '';
 
-      const formattedRepo = formatRepoName(item.repo, orgName());
+      const formattedRepo = formatRepoName(item.repo, orgName() || '');
       
       if (item.type === 'comment') {
         title = `💬 New comment by ${item.user.login}`;
@@ -326,20 +331,8 @@ export default function Home() {
       
       const data = await response.json();
       
-      // Handle new API response format with orgName and ownUsername
+      // Handle API response format  
       const items = data.items || data; // Support both old and new format
-      const apiOrgName = data.orgName || '';
-      const apiOwnUsername = data.ownUsername || '';
-      
-      // Update org name if provided
-      if (apiOrgName) {
-        setOrgName(apiOrgName);
-      }
-      
-      // Update own username if provided
-      if (apiOwnUsername) {
-        setOwnUsername(apiOwnUsername);
-      }
       
       // Check for new items and show notifications
       checkForNewItems(items);
@@ -503,7 +496,7 @@ export default function Home() {
                       <div class={`${item.type}-footer`}>
                         <div class={`${item.type}-issue-details`}>
                           <span class="issue-link">#{item.issue_number}</span>
-                          <span class="repo-name">{formatRepoName(item.repo, orgName())}</span>
+                          <span class="repo-name">{formatRepoName(item.repo, orgName() || '')}</span>
                           <Show when={item.issue_title}>
                             <span class="issue-title-footer"> - <strong>{item.issue_title}</strong></span>
                           </Show>
@@ -552,7 +545,7 @@ export default function Home() {
                 <For each={uniqueIssues()}>
                   {(issue) => (
                     <a href={issue.html_url} target="_blank" rel="noopener" class="issue-link pill">
-                      {formatRepoName(issue.repo, orgName())}#{issue.issue_number}
+                      {formatRepoName(issue.repo, orgName() || '')}#{issue.issue_number}
                     </a>
                   )}
                 </For>
