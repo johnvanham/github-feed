@@ -142,6 +142,7 @@ export default function Home() {
   const [lastRefresh, setLastRefresh] = createSignal<Date | null>(null);
   const [nextRefreshCountdown, setNextRefreshCountdown] = createSignal<number>(60);
   const [previousDate, setPreviousDate] = createSignal<string>('');
+  let dateInputRef: HTMLInputElement;
 
   // Check authentication on component mount
   onMount(() => {
@@ -153,6 +154,13 @@ export default function Home() {
     // Force date picker to current date on page refresh to prevent mismatch
     const currentDate = new Date().toISOString().split('T')[0];
     setSelectedDate(currentDate);
+    
+    // Also directly update the DOM input to override browser form persistence
+    setTimeout(() => {
+      if (dateInputRef) {
+        dateInputRef.value = currentDate;
+      }
+    }, 0);
     
     // Initialize previous date to current date to avoid animations on first load
     setPreviousDate(currentDate);
@@ -392,6 +400,7 @@ export default function Home() {
         <div class="header-controls">
           <div class="date-input">
             <input
+            ref={dateInputRef}
             type="date"
             value={selectedDate()}
             required
