@@ -1,6 +1,6 @@
 {
   "name": "github-feed",
-  "version": "1.8.10",
+  "version": "1.8.11",
   "type": "module",
   "description": "Real-time GitHub feed using webhooks - built with SolidJS and SolidStart",
   "scripts": {

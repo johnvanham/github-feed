@@ -33,16 +33,32 @@ npm run build
 # Production (built app)
 node .output/server/index.mjs
 
-# Docker build (ARM64 optimized)
-podman build --platform linux/arm64 -t github-feed:v1.8.0 .
+# Docker build - Multi-Architecture
+# AMD64 build (local)
+podman build -t github-feed:v1.8.10-amd64 .
 
-# Tag for GitHub Container Registry
-podman tag github-feed:v1.8.0 ghcr.io/johnvanham/github-feed:v1.8.0
-podman tag github-feed:v1.8.0 ghcr.io/johnvanham/github-feed:latest
+# ARM64 build (remote Mac Mini - see Remote Build Setup below)
+podman --remote --connection macmini build --platform linux/arm64 -t github-feed:v1.8.10-arm64 .
 
-# Push to GitHub Container Registry
-podman push ghcr.io/johnvanham/github-feed:v1.8.0
-podman push ghcr.io/johnvanham/github-feed:latest
+# Tag both architectures for GitHub Container Registry
+podman tag github-feed:v1.8.10-amd64 ghcr.io/johnvanham/github-feed:v1.8.10-amd64
+podman --remote --connection macmini tag github-feed:v1.8.10-arm64 ghcr.io/johnvanham/github-feed:v1.8.10-arm64
+
+# Push both architecture images
+podman push ghcr.io/johnvanham/github-feed:v1.8.10-amd64
+podman --remote --connection macmini push ghcr.io/johnvanham/github-feed:v1.8.10-arm64
+
+# Create and push multi-architecture manifest
+podman manifest create ghcr.io/johnvanham/github-feed:v1.8.10
+podman manifest add ghcr.io/johnvanham/github-feed:v1.8.10 ghcr.io/johnvanham/github-feed:v1.8.10-amd64
+podman manifest add ghcr.io/johnvanham/github-feed:v1.8.10 ghcr.io/johnvanham/github-feed:v1.8.10-arm64
+podman manifest push ghcr.io/johnvanham/github-feed:v1.8.10
+
+# Create and push latest multi-arch manifest
+podman manifest create ghcr.io/johnvanham/github-feed:latest
+podman manifest add ghcr.io/johnvanham/github-feed:latest ghcr.io/johnvanham/github-feed:v1.8.10-amd64
+podman manifest add ghcr.io/johnvanham/github-feed:latest ghcr.io/johnvanham/github-feed:v1.8.10-arm64
+podman manifest push ghcr.io/johnvanham/github-feed:latest
 
 # Run container
 podman run -d --name github-feed -p 3000:3000 -v /data/github-feed:/data ghcr.io/johnvanham/github-feed:latest
@@ -191,7 +207,59 @@ podman push ghcr.io/johnvanham/github-feed:v1.8.0
 podman push ghcr.io/johnvanham/github-feed:latest
 ```
 
-## Recent Changes (v1.8.0)
+## Remote Build Setup for Multi-Architecture Images
+
+The project uses a remote Mac Mini for native ARM64 builds to avoid slow emulation. This setup enables fast, native builds for both AMD64 (local Linux) and ARM64 (remote Mac) architectures.
+
+### Prerequisites on Remote Mac Mini
+1. **SSH access enabled**: System Settings → General → Sharing → Remote Login
+2. **SSH key authentication configured**: Use `ssh-copy-id username@macmini` from local machine
+3. **Podman installed**: `brew install podman`
+4. **Podman machine initialized and started**:
+   ```bash
+   podman machine init
+   podman machine start
+   ```
+
+### Setup Remote Connection (One-time)
+```bash
+# Add remote Podman connection (replace socket path as needed)
+podman system connection add macmini ssh://username@macmini/var/folders/.../T/podman/podman-machine-default-api.sock
+
+# Verify connection works
+podman --remote --connection macmini version
+```
+
+### Finding the Correct Socket Path
+```bash
+# SSH to Mac Mini and find socket
+ssh username@macmini "find /var/folders -name '*.sock' -type s 2>/dev/null | grep podman-machine-default-api"
+```
+
+### Remote Build Commands
+```bash
+# Build ARM64 image remotely
+podman --remote --connection macmini build --platform linux/arm64 -t image:tag .
+
+# Tag and push from remote
+podman --remote --connection macmini tag image:tag registry/image:tag-arm64
+podman --remote --connection macmini push registry/image:tag-arm64
+```
+
+### Notes
+- Remote connection persists across sessions
+- Mac Mini Podman machine must be running for remote builds
+- Docker Desktop not required on Mac Mini (Podman machine is independent)
+- Socket path may change if Podman machine is recreated
+
+## Recent Changes (v1.8.9-1.8.10)
+1. **Server-Side Configuration Caching**: Moved `orgName` from API response to server-side cached loader for better performance
+2. **Notification Filtering Optimization**: Replaced `ownUsername` comparison with pre-computed `own_comment` database field
+3. **Reduced API Payload**: Removed redundant `orgName` and `ownUsername` from feed endpoint responses
+4. **Multi-Architecture Deployment**: Added proper multi-arch manifests for AMD64 and ARM64 support
+5. **Remote ARM64 Building**: Implemented Mac Mini remote builder for native ARM64 performance
+
+## Previous Changes (v1.8.0)
 1. **Motion.dev Animations**: Replaced CSS animations with solid-motionone library for notification-style animations
 2. **Enhanced New Item Animations**: New items now slide in with smooth scale and opacity transitions
 3. **Layout Animations**: Added automatic layout animations when items are added/removed

@@ -150,8 +150,12 @@ export default function Home() {
       return;
     }
     
+    // Force date picker to current date on page refresh to prevent mismatch
+    const currentDate = new Date().toISOString().split('T')[0];
+    setSelectedDate(currentDate);
+    
     // Initialize previous date to current date to avoid animations on first load
-    setPreviousDate(selectedDate());
+    setPreviousDate(currentDate);
     
     // Request notification permission if authenticated
     requestNotificationPermission();
