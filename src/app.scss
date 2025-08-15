@@ -226,6 +226,7 @@ ul {
 .comment {
   padding: 0.8em;
   position: relative;
+  min-height: 2em; /* Ensure space for truncation indicator */
 }
 
 .comment-footer {
@@ -296,6 +297,7 @@ ul {
 
 .event-body {
   padding: 0.8em;
+  min-height: 2em; /* Ensure space for truncation indicator */
 }
 
 .event-footer {
@@ -509,9 +511,9 @@ ul {
   color: rgb(192, 192, 192);
   padding: 0.1em 1em;
   border-radius: 8px;
-  position: absolute;
-  right: 1em;
-  bottom: 0.5em;
+  display: inline-block;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 /* Image link styling */
 .image-link {

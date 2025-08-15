@@ -128,11 +128,15 @@ export async function POST(event: APIEvent) {
         });
       }
       
+      // Generate unique ID for event based on issue ID, action, and timestamp
+      const timestamp = body.action === 'opened' ? body.issue.created_at : body.issue.updated_at;
+      const eventId = parseInt(`${body.issue.id}${body.action === 'opened' ? '1' : body.action === 'closed' ? '2' : '3'}${Math.floor(new Date(timestamp).getTime() / 1000)}`);
+      
       const feedItem = {
-        id: body.issue.id,
+        id: eventId,
         type: 'event' as const,
-        created_at: body.action === 'opened' ? body.issue.created_at : body.issue.updated_at,
-        user: body.issue.user,
+        created_at: timestamp,
+        user: body.sender || body.issue.user, // Use sender (action performer) if available, fallback to issue user
         repo: body.repository.full_name,
         html_url: body.issue.html_url,
         issue_url: body.issue.html_url,
@@ -140,7 +144,7 @@ export async function POST(event: APIEvent) {
         issue_title: body.issue.title,
         body: body.action === 'opened' ? body.issue.body : undefined,
         event: body.action as 'opened' | 'closed' | 'reopened',
-        own_comment: body.issue.user.login === process.env.GITHUB_OWN_USERNAME
+        own_comment: (body.sender || body.issue.user).login === process.env.GITHUB_OWN_USERNAME
       };
       
       // Add to database
