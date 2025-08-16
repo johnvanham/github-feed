@@ -252,6 +252,25 @@ podman --remote --connection macmini push registry/image:tag-arm64
 - Docker Desktop not required on Mac Mini (Podman machine is independent)
 - Socket path may change if Podman machine is recreated
 
+### External Storage Limitations (IMPORTANT)
+**Podman container storage CANNOT be placed on external APFS drives via VirtioFS due to fundamental filesystem operation limitations.**
+
+- **Issue**: When attempting to store Podman containers on external drives, builds fail with "pivot_root: operation not permitted" errors
+- **Root Cause**: VirtioFS filesystem virtualization layer on macOS prevents the low-level mount operations required by container storage drivers
+- **Research Confirmed**: This is a known limitation acknowledged by Podman maintainers - VirtioFS does not support the complex filesystem operations needed for container overlay storage
+- **Failed Solutions Tested**:
+  - Changing ownership/permissions of external drive directories
+  - Using symbolic links from internal to external storage
+  - Testing different Podman storage drivers (overlay, VFS, ZFS, Btrfs, DeviceMapper)
+  - Enabling "Full Disk Access" for SSH and Terminal in macOS security settings
+- **Current Solution**: Use internal Mac Mini storage for ARM64 builds
+- **Cache Management**: Clear Podman cache after each successful deployment to manage internal storage space:
+  ```bash
+  podman --remote --connection macmini system prune -a -f
+  ```
+
+This limitation affects only external APFS drive storage via VirtioFS. Internal storage and direct Linux machines work normally.
+
 ## Recent Changes (v1.8.9-1.8.10)
 1. **Server-Side Configuration Caching**: Moved `orgName` from API response to server-side cached loader for better performance
 2. **Notification Filtering Optimization**: Replaced `ownUsername` comparison with pre-computed `own_comment` database field
