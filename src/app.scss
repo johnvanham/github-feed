@@ -226,7 +226,6 @@ ul {
 .comment {
   padding: 0.8em;
   position: relative;
-  min-height: 2em; /* Ensure space for truncation indicator */
 }
 
 .comment-footer {
@@ -297,7 +296,6 @@ ul {
 
 .event-body {
   padding: 0.8em;
-  min-height: 2em; /* Ensure space for truncation indicator */
 }
 
 .event-footer {
@@ -505,16 +503,6 @@ ul {
   text-decoration: none;
 }
 
-/* Truncation indicator matching github-comments */
-.more {
-  background-color: #00183a;
-  color: rgb(192, 192, 192);
-  padding: 0.1em 1em;
-  border-radius: 8px;
-  display: inline-block;
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-}
 /* Image link styling */
 .image-link {
   background-color: #21262d;

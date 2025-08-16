@@ -123,7 +123,7 @@ function truncate(str: string, paras: number = 3): string {
   
   const paragraphs = str.split('\n');
   return paragraphs.length > paras
-    ? paragraphs.slice(0, paras).join('<br>') + '<span class="more">...</span>'
+    ? paragraphs.slice(0, paras).join('<br>') + '...'
     : str;
 }
 
