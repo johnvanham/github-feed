@@ -104,21 +104,21 @@ class FeedDatabase {
     }
   }
 
-  async getFeedItems(date?: string): Promise<FeedItem[]> {
+  async getFeedItems(startDate?: string, endDate?: string): Promise<FeedItem[]> {
     await this.initialize();
-    
+
     try {
       let query = `SELECT * FROM feed_items`;
-      let stmt;
+      const params: string[] = [];
 
-      if (date) {
-        query += ` WHERE created_at_date = ?`;
-        stmt = this.db.prepare(query + ` ORDER BY created_at DESC`);
-        return stmt.all(date).map(this.mapRowToFeedItem);
-      } else {
-        stmt = this.db.prepare(query + ` ORDER BY created_at DESC`);
-        return stmt.all().map(this.mapRowToFeedItem);
+      if (startDate && endDate) {
+        query += ` WHERE created_at_date >= ? AND created_at_date <= ?`;
+        params.push(startDate, endDate);
       }
+
+      query += ` ORDER BY created_at DESC`;
+      const stmt = this.db.prepare(query);
+      return (params.length > 0 ? stmt.all(...params) : stmt.all()).map(this.mapRowToFeedItem);
     } catch (error) {
       console.error('Error fetching feed items from database:', error);
       throw error;

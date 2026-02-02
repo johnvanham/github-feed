@@ -101,6 +101,85 @@ interface IssuePill {
   html_url: string;
 }
 
+type Period = 'day' | 'week' | 'month' | 'year';
+
+// Format date as YYYY-MM-DD in local timezone (avoids UTC conversion issues)
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getDateRangeForPeriod(
+  period: Period,
+  selectedDate: string
+): { startDate: string; endDate: string } {
+  // Parse the selected date
+  const date = new Date(selectedDate + 'T00:00:00');
+
+  switch (period) {
+    case 'day':
+      return { startDate: selectedDate, endDate: selectedDate };
+
+    case 'week': {
+      // Calculate Monday and Sunday of the week containing the selected date
+      const dayOfWeek = date.getDay();
+      const monday = new Date(date);
+      monday.setDate(date.getDate() - ((dayOfWeek + 6) % 7));
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      return {
+        startDate: formatLocalDate(monday),
+        endDate: formatLocalDate(sunday)
+      };
+    }
+
+    case 'month': {
+      // First and last day of the month containing the selected date
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      return {
+        startDate: formatLocalDate(firstDay),
+        endDate: formatLocalDate(lastDay)
+      };
+    }
+
+    case 'year': {
+      // Full year containing the selected date
+      const year = date.getFullYear();
+      return {
+        startDate: `${year}-01-01`,
+        endDate: `${year}-12-31`
+      };
+    }
+  }
+}
+
+function isCurrentPeriod(period: Period, selectedDate: string): boolean {
+  const today = new Date();
+  const selected = new Date(selectedDate + 'T00:00:00');
+
+  switch (period) {
+    case 'day':
+      return selectedDate === formatLocalDate(today);
+    case 'week': {
+      // Check if selected date is in the same week as today
+      const todayWeekStart = new Date(today);
+      todayWeekStart.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+      const selectedWeekStart = new Date(selected);
+      selectedWeekStart.setDate(selected.getDate() - ((selected.getDay() + 6) % 7));
+      return formatLocalDate(todayWeekStart) === formatLocalDate(selectedWeekStart);
+    }
+    case 'month':
+      return today.getFullYear() === selected.getFullYear() && today.getMonth() === selected.getMonth();
+    case 'year':
+      return today.getFullYear() === selected.getFullYear();
+  }
+}
+
 // Process images in markdown content
 function processImages(str: string): string {
   if (!str) return '';
@@ -134,6 +213,7 @@ export default function Home() {
   const orgName = createAsync(() => getOrgName());
   const [feedItems, setFeedItems] = createSignal<FeedItem[]>([]);
   const [selectedDate, setSelectedDate] = createSignal(new Date().toISOString().split('T')[0]);
+  const [period, setPeriod] = createSignal<Period>('day');
   const [loading, setLoading] = createSignal(true);
   const [initialLoad, setInitialLoad] = createSignal(true);
   const [seenItemsByDate, setSeenItemsByDate] = createSignal<Map<string, Set<number>>>(new Map());
@@ -141,8 +221,14 @@ export default function Home() {
   const [newItemIds, setNewItemIds] = createSignal<Set<number>>(new Set());
   const [lastRefresh, setLastRefresh] = createSignal<Date | null>(null);
   const [nextRefreshCountdown, setNextRefreshCountdown] = createSignal<number>(60);
-  const [previousDate, setPreviousDate] = createSignal<string>('');
+  const [previousPeriodKey, setPreviousPeriodKey] = createSignal<string>('');
   let dateInputRef: HTMLInputElement;
+
+  // Key for tracking period changes (for animation logic)
+  const currentPeriodKey = createMemo(() => {
+    const { startDate, endDate } = getDateRangeForPeriod(period(), selectedDate());
+    return `${period()}-${startDate}-${endDate}`;
+  });
 
   // Check authentication on component mount
   onMount(() => {
@@ -150,21 +236,21 @@ export default function Home() {
       navigate('/login');
       return;
     }
-    
+
     // Force date picker to current date on page refresh to prevent mismatch
     const currentDate = new Date().toISOString().split('T')[0];
     setSelectedDate(currentDate);
-    
+
     // Also directly update the DOM input to override browser form persistence
     setTimeout(() => {
       if (dateInputRef) {
         dateInputRef.value = currentDate;
       }
     }, 0);
-    
-    // Initialize previous date to current date to avoid animations on first load
-    setPreviousDate(currentDate);
-    
+
+    // Initialize previous period key to current to avoid animations on first load
+    setPreviousPeriodKey(currentPeriodKey());
+
     // Request notification permission if authenticated
     requestNotificationPermission();
   });
@@ -258,31 +344,31 @@ export default function Home() {
 
   // Check for new items and show notifications
   const checkForNewItems = (newItems: FeedItem[]) => {
-    const currentDate = selectedDate();
+    const periodKey = currentPeriodKey();
     const seenByDate = seenItemsByDate();
-    const currentSeen = seenByDate.get(currentDate) || new Set<number>();
+    const currentSeen = seenByDate.get(periodKey) || new Set<number>();
     const newItemsToNotify: FeedItem[] = [];
     const newAnimationIds = new Set<number>();
-    
-    // Check if we're switching dates vs refreshing same date
-    const isDateChange = previousDate() !== currentDate;
-    
+
+    // Check if we're switching periods vs refreshing same period
+    const isPeriodChange = previousPeriodKey() !== periodKey;
+
     for (const item of newItems) {
       if (!currentSeen.has(item.id)) {
         newItemsToNotify.push(item);
         // Only animate if:
         // 1. Not initial load
-        // 2. NOT switching dates (only on refresh of same date)
-        // 3. We're viewing today's date (only animate new items on current date)
-        const today = new Date().toISOString().split('T')[0];
-        if (!initialLoad() && !isDateChange && currentDate === today) {
+        // 2. NOT switching periods (only on refresh of same period)
+        // 3. We're viewing the current period
+        const isCurrentView = isCurrentPeriod(period(), selectedDate());
+        if (!initialLoad() && !isPeriodChange && isCurrentView) {
           newAnimationIds.add(item.id);
         }
       }
     }
 
-    // Update previous date tracking
-    setPreviousDate(currentDate);
+    // Update previous period key tracking
+    setPreviousPeriodKey(periodKey);
 
     // Update new items for animation
     if (newAnimationIds.size > 0) {
@@ -307,18 +393,19 @@ export default function Home() {
     }
 
     // Only show notifications for new items if this isn't the initial load
-    if (!initialLoad() && newItemsToNotify.length > 0) {
-      // Only notify for today's items to avoid spam when changing dates
-      const today = new Date().toISOString().split('T')[0];
-      if (currentDate === today) {
+    // and we're not switching periods (only on refresh of same period)
+    if (!initialLoad() && !isPeriodChange && newItemsToNotify.length > 0) {
+      // Only notify when viewing current period to avoid spam
+      const isCurrentView = isCurrentPeriod(period(), selectedDate());
+      if (isCurrentView) {
         newItemsToNotify.forEach(item => showNotification(item));
       }
     }
 
-    // Update seen items for this specific date
+    // Update seen items for this specific period
     const updatedSeenByDate = new Map(seenByDate);
     const allItemIds = new Set(newItems.map(item => item.id));
-    updatedSeenByDate.set(currentDate, allItemIds);
+    updatedSeenByDate.set(periodKey, allItemIds);
     setSeenItemsByDate(updatedSeenByDate);
   };
 
@@ -328,27 +415,28 @@ export default function Home() {
     try {
       const token = getAuthToken();
       const headers: Record<string, string> = {};
-      
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      
-      const response = await fetch(`/api/feed?date=${selectedDate()}`, { headers });
-      
+
+      const { startDate, endDate } = getDateRangeForPeriod(period(), selectedDate());
+      const response = await fetch(`/api/feed?startDate=${startDate}&endDate=${endDate}`, { headers });
+
       if (response.status === 401) {
         // Token expired or invalid, redirect to login
         logout();
         return;
       }
-      
+
       const data = await response.json();
-      
-      // Handle API response format  
+
+      // Handle API response format
       const items = data.items || data; // Support both old and new format
-      
+
       // Check for new items and show notifications
       checkForNewItems(items);
-      
+
       setFeedItems(items);
       setLastRefresh(new Date());
     } catch (error) {
@@ -360,35 +448,37 @@ export default function Home() {
     }
   };
 
-  // Load feed items for the selected date
+  // Load feed items when period or selection changes
   createEffect(() => {
+    // Track all reactive dependencies
+    const _ = [period(), selectedDate()];
     loadFeedData();
   });
 
-  // Auto-refresh with countdown timer when viewing current date
-  onMount(() => {    
+  // Auto-refresh with countdown timer when viewing current period
+  onMount(() => {
     let countdownSeconds = 60;
     setNextRefreshCountdown(countdownSeconds);
-    
+
     const countdownInterval = setInterval(() => {
-      const today = new Date().toISOString().split('T')[0];
-      
-      if (selectedDate() === today) {
+      const isCurrentView = isCurrentPeriod(period(), selectedDate());
+
+      if (isCurrentView) {
         countdownSeconds--;
         setNextRefreshCountdown(countdownSeconds);
-        
+
         if (countdownSeconds <= 0) {
           loadFeedData();
           countdownSeconds = 60; // Reset countdown
           setNextRefreshCountdown(countdownSeconds);
         }
       } else {
-        // Reset countdown when not on current date
+        // Reset countdown when not on current period
         countdownSeconds = 60;
         setNextRefreshCountdown(countdownSeconds);
       }
     }, 1000); // Update every second
-    
+
     // Cleanup interval on unmount
     return () => clearInterval(countdownInterval);
   });
@@ -398,29 +488,39 @@ export default function Home() {
       <div class="header">
         <h1>GitHub Feed</h1>
         <div class="header-controls">
-          <div class="date-input">
-            <input
-            ref={dateInputRef}
-            type="date"
-            value={selectedDate()}
-            required
-            onInput={(e) => {
-              const newValue = e.target.value;
-              // Only update if we have a valid date, otherwise keep current date
-              if (newValue && newValue.trim() !== '') {
-                setSelectedDate(newValue);
-              } else {
-                // Reset to current value if cleared
-                e.target.value = selectedDate();
-              }
-            }}
-            onBlur={(e) => {
-              // Ensure we always have a valid date on blur
-              if (!e.target.value || e.target.value.trim() === '') {
-                e.target.value = selectedDate();
-              }
-            }}
-          />
+          <div class="period-selector">
+            <select
+              class="period-dropdown"
+              value={period()}
+              onChange={(e) => setPeriod(e.target.value as Period)}
+            >
+              <option value="day">Day</option>
+              <option value="week">Week</option>
+              <option value="month">Month</option>
+              <option value="year">Year</option>
+            </select>
+
+            <div class="date-input">
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={selectedDate()}
+                required
+                onInput={(e) => {
+                  const newValue = e.target.value;
+                  if (newValue && newValue.trim() !== '') {
+                    setSelectedDate(newValue);
+                  } else {
+                    e.target.value = selectedDate();
+                  }
+                }}
+                onBlur={(e) => {
+                  if (!e.target.value || e.target.value.trim() === '') {
+                    e.target.value = selectedDate();
+                  }
+                }}
+              />
+            </div>
           </div>
           <button class="logout-button" onClick={logout}>
             Logout
@@ -482,6 +582,10 @@ export default function Home() {
                         </div>
                         <div class={`${item.type}-timestamp`}>
                           <strong>
+                            {new Date(item.created_at).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short'
+                            })}{' '}
                             {new Date(item.created_at).toLocaleTimeString('en-GB', {
                               timeZoneName: 'short'
                             })}
@@ -579,7 +683,7 @@ export default function Home() {
       <footer class="version-footer">
         <div class="footer-content">
           <span class="version-text">GitHub Feed v{appVersion() || "loading..."}</span>
-          <Show when={selectedDate() === new Date().toISOString().split('T')[0]}>
+          <Show when={isCurrentPeriod(period(), selectedDate())}>
             <div class="refresh-info">
               <Show when={loading() && !initialLoad()}>
                 <span class="refresh-status refreshing">↻ Refreshing...</span>
@@ -591,9 +695,9 @@ export default function Home() {
               </Show>
               <Show when={lastRefresh()}>
                 <span class="last-refresh">
-                  Last: {lastRefresh()?.toLocaleTimeString('en-GB', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
+                  Last: {lastRefresh()?.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit'
                   })}
                 </span>
               </Show>

@@ -17,13 +17,15 @@ export async function GET(event: APIEvent) {
     }
 
     const url = new URL(event.request.url);
-    const dateParam = url.searchParams.get('date');
-    
+    const startDate = url.searchParams.get('startDate');
+    const endDate = url.searchParams.get('endDate');
+
     // Get events from database (already sorted by created_at DESC)
-    const sortedEvents = await db.getFeedItems(dateParam || undefined);
+    const sortedEvents = await db.getFeedItems(startDate || undefined, endDate || undefined);
     console.log(`Feed API: Total events available: ${sortedEvents.length}`);
 
-    console.log(`[${new Date().toISOString()}] Feed API: returning ${sortedEvents.length} items${dateParam ? ` for date ${dateParam}` : ''} for user ${auth.username}`);
+    const dateRange = startDate && endDate ? `${startDate} to ${endDate}` : 'all dates';
+    console.log(`[${new Date().toISOString()}] Feed API: returning ${sortedEvents.length} items for ${dateRange} for user ${auth.username}`);
 
     return new Response(JSON.stringify({
       items: sortedEvents
